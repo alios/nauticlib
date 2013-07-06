@@ -30,6 +30,8 @@ import qualified Data.ByteString.Lazy as BL
 
 import Data.Attoparsec as P
 import qualified Data.Attoparsec.ByteString.Char8 as C8
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 --
 -- external type definitions
@@ -44,7 +46,7 @@ data DataDescriptiveRecord =
     DDR {
       ddrFileName :: !String,
       ddrFieldStructure :: ![(String, String)],
-      ddrDataFormats :: ![(String, DataDescriptiveField)]
+      ddrDataFormats :: Map String DataDescriptiveField -- [(String, DataDescriptiveField)]
     } deriving (Show, Eq)
 
 data DataFieldT =
@@ -100,9 +102,11 @@ data DataFormat = CharacterData (Maybe Integer)
                 deriving (Show, Eq)
 
 data DataStructure = SD DataFieldT
-                   | LS [(String, DataFieldT)] 
-                   | MDS [[(String, DataFieldT)]]
+                   | LS (Map String DataFieldT)
+                   | MDS [Map String DataFieldT]
                    deriving (Show, Eq)
+
+
 --
 -- internal type definitions
 --
@@ -151,7 +155,7 @@ parseDDR' = do
   let rs'= [(a, either error id $ parseOnly 
              (parseDataDescriptiveField fcl sFieldTagF) b) | (a,b) <- rs]
 
-  let ddr =  DDR fname fstruct rs'
+  let ddr =  DDR fname fstruct $ Map.fromList rs'
   return ((ichglvl, lid, ext, ver, appi, extCharSet), ddr)
 
 parseDR :: DataDescriptiveRecord -> Parser DataRecord
@@ -182,7 +186,7 @@ parseRT = do _ <- C8.char recordTerminator; return ()
 ddrParserLookup :: DataDescriptiveRecord -> String -> Parser DataStructure
 ddrParserLookup ddr t = do
   let (sc, _, esc, _, dfs) = maybe (error $ "unknown field: " ++ t) id 
-                             $ lookup t (ddrDataFormats ddr)
+                             $ Map.lookup t (ddrDataFormats ddr)
   dfsParser dfs esc sc
 
 dfsParser :: 
@@ -199,11 +203,11 @@ dfsParser dfs esc sc =
                       _ <- parseRT
                       return $ SD r
                   LinearStructure -> do
-                      r <- fmap LS mfp
+                      r <-  fmap (LS . Map.fromList) mfp
                       _ <- parseRT
-                      return r
+                      return $ r
                   MultiDimStructure ->
-                      fmap MDS $ mfp `manyTill` (try $ parseRT)
+                      fmap (MDS . (map Map.fromList) ) $ mfp `manyTill` (try $ parseRT)
           return res
 
 
