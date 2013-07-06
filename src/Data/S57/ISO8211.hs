@@ -34,7 +34,7 @@ import qualified Data.Attoparsec.ByteString.Char8 as C8
 
 type DataFile = (DataDescriptiveRecord, [DataRecord])
 
-type DataRecord = [DataField]
+type DataRecord = Tree DataField
 type DataField = (String, DataStructure)
 
 data DataDescriptiveRecord = 
@@ -138,7 +138,7 @@ parseDR' ddr = do
   let bss = [ (t, BS.take l $ BS.drop p bs) | (t,p,l) <- ds] 
   let dfs = map (\(t, lbs) -> (t, either error id $ 
                               parseOnly (ddrParserLookup ddr t) lbs)) bss
-  return ((ichglvl, lid, ext, ver, appi, extCharSet), dfs)
+  return ((ichglvl, lid, ext, ver, appi, extCharSet), drsToTree' ddr dfs)
 
 
 --
@@ -227,9 +227,12 @@ sintParser p =
         msbSet = testBit ui ((bitSize ui) - 1)
     in if (msbSet) then (negate c2)  else (toInteger ui)
  
--- TODO
-drsToTree :: DataDescriptiveRecord -> [DataField] -> Tree DataField
-drsToTree ddr [] = undefined
+drsToTree' :: DataDescriptiveRecord -> [DataField] -> Tree DataField
+drsToTree' ddr dfs  =
+    let cs' k = ddrLookupChildFields ddr k
+        cs k = filter (\(k',_) -> k' `elem` (cs' k)) dfs
+    in head $ unfoldForest (\b@(k,v) -> (b, cs k)) dfs
+
 
 ddrLookupParentField :: DataDescriptiveRecord -> String -> Maybe String
 ddrLookupParentField ddr fn = findParent (ddrFieldStructure ddr) fn

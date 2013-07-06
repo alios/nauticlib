@@ -59,12 +59,13 @@ library
                        binary,
                        attoparsec
   
-test-suite digimil-tests
+test-suite ISO8211Test
   type:			exitcode-stdio-1.0
   hs-source-dirs:	tests
   main-is:		ISO8211Test.hs
   build-depends:	base,
                         bytestring, 
                         attoparsec,
+                        pretty-show,
                         nauticlib
 
