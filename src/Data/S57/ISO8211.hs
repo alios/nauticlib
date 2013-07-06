@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+
 module Data.S57.ISO8211 (DataFile
                ,DataDescriptiveRecord
                ,DataRecord
@@ -7,6 +9,7 @@ module Data.S57.ISO8211 (DataFile
                ,TruncedEscapeSequence (..)
                ,DataStructure (..)
                ,DataFormat (..)
+               ,DataField(..)
                ,parseDataFile
                ,parseDDR, parseDDR'
                ,parseDR, parseDR'
@@ -34,8 +37,8 @@ import qualified Data.Attoparsec.ByteString.Char8 as C8
 
 type DataFile = (DataDescriptiveRecord, [DataRecord])
 
-type DataRecord = Tree DataField
-type DataField = (String, DataStructure)
+type DataRecord = Tree DataFieldR
+type DataFieldR = (String, DataStructure)
 
 data DataDescriptiveRecord = 
     DDR {
@@ -47,7 +50,31 @@ data DataDescriptiveRecord =
 data DataFieldT =
     DFString !String | DFInteger !Integer | DFReal !Double | DFByteString !ByteString
     deriving (Eq, Show)
-                 
+
+class DataField t where
+    fromDataFieldT :: DataFieldT -> t
+    toDataFieldT  :: t -> DataFieldT
+
+instance DataField String where
+    fromDataFieldT (DFString s) = s
+    fromDataFieldT v = error $ "fromDataFieldT is not a String: " ++ show v
+    toDataFieldT = DFString
+
+instance DataField Integer where
+    fromDataFieldT (DFInteger i) = i
+    fromDataFieldT v = error $ "fromDataFieldT is not an Integer: " ++ show v
+    toDataFieldT = DFInteger
+
+instance DataField Double where
+    fromDataFieldT (DFReal r) = r
+    fromDataFieldT v = error $ "fromDataFieldT is not a Double: " ++ show v
+    toDataFieldT = DFReal
+
+instance DataField ByteString where
+    fromDataFieldT (DFByteString bs) = bs
+    fromDataFieldT v = error $ "fromDataFieldT is not a ByteString: " ++ show v
+    toDataFieldT = DFByteString
+  
 type DataDescriptiveField =
     (DataStructureCode, DataTypeCode, TruncedEscapeSequence, String, [(String, DataFormat)])
 
@@ -227,7 +254,7 @@ sintParser p =
         msbSet = testBit ui ((bitSize ui) - 1)
     in if (msbSet) then (negate c2)  else (toInteger ui)
  
-drsToTree' :: DataDescriptiveRecord -> [DataField] -> Tree DataField
+drsToTree' :: DataDescriptiveRecord -> [DataFieldR] -> Tree DataFieldR
 drsToTree' ddr dfs  =
     let cs' k = ddrLookupChildFields ddr k
         cs k = filter (\(k',_) -> k' `elem` (cs' k)) dfs
