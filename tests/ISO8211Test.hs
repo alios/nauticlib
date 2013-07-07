@@ -14,10 +14,11 @@ main = do
  case r of
    Left err -> print err
    Right f -> do
-          putStr . ppShow $ dsid_dssi f
-          print $ dsid_uadt f
+          putStr . ppShow .dsid $ f
+          print ""
+{-          print $ dsid_uadt f
           print $ dsid_prsp f
           print $ dsid_prof f
           print $ dsid_dssi_dstr f
           print $ dsid_dssi_nall f
-
+-}

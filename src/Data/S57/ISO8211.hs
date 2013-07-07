@@ -54,27 +54,22 @@ data DataFieldT =
 
 class DataField t where
     fromDataField :: DataFieldT -> t
-    toDataField  :: t -> DataFieldT
 
 instance DataField String where
     fromDataField (DFString s) = s
     fromDataField v = error $ "fromDataFieldT is not a String: " ++ show v
-    toDataField = DFString
 
 instance DataField Integer where
     fromDataField (DFInteger i) = i
     fromDataField v = error $ "fromDataFieldT is not an Integer: " ++ show v
-    toDataField = DFInteger
 
 instance DataField Double where
     fromDataField (DFReal r) = r
     fromDataField v = error $ "fromDataFieldT is not a Double: " ++ show v
-    toDataField = DFReal
 
 instance DataField ByteString where
     fromDataField (DFByteString bs) = bs
     fromDataField v = error $ "fromDataFieldT is not a ByteString: " ++ show v
-    toDataField = DFByteString
   
 type DataDescriptiveField =
     (DataStructureCode, DataTypeCode, LexicalLevel, String, [(String, DataFormat)])
