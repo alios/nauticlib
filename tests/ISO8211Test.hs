@@ -14,7 +14,7 @@ main = do
  case r of
    Left err -> print err
    Right f -> do
-          putStr . ppShow .dsid $ f
+          putStr . ppShow . vrids $ f
           print ""
 {-          print $ dsid_uadt f
           print $ dsid_prsp f
