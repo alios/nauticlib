@@ -6,16 +6,15 @@ module Data.S57.ISO8211 (DataFile
                ,DataDescriptiveField
                ,DataStructureCode (..)
                ,DataTypeCode (..)
-               ,TruncedEscapeSequence (..)
+               ,LexicalLevel (..)
                ,DataStructure (..)
                ,DataFormat (..)
                ,DataField(..)
+               ,DataFieldT(..)
                ,parseDataFile
-               ,parseDDR, parseDDR'
-               ,parseDR, parseDR'
-               ,ddrFileName
-               ,ddrFieldStructure
-               ,ddrDataFormats
+               , dsSingleData
+               , dsLinearStruct
+               , dsMultiDimStruct 
                ) where
 
 import Data.ByteString (ByteString)
@@ -54,31 +53,31 @@ data DataFieldT =
     deriving (Eq, Show)
 
 class DataField t where
-    fromDataFieldT :: DataFieldT -> t
-    toDataFieldT  :: t -> DataFieldT
+    fromDataField :: DataFieldT -> t
+    toDataField  :: t -> DataFieldT
 
 instance DataField String where
-    fromDataFieldT (DFString s) = s
-    fromDataFieldT v = error $ "fromDataFieldT is not a String: " ++ show v
-    toDataFieldT = DFString
+    fromDataField (DFString s) = s
+    fromDataField v = error $ "fromDataFieldT is not a String: " ++ show v
+    toDataField = DFString
 
 instance DataField Integer where
-    fromDataFieldT (DFInteger i) = i
-    fromDataFieldT v = error $ "fromDataFieldT is not an Integer: " ++ show v
-    toDataFieldT = DFInteger
+    fromDataField (DFInteger i) = i
+    fromDataField v = error $ "fromDataFieldT is not an Integer: " ++ show v
+    toDataField = DFInteger
 
 instance DataField Double where
-    fromDataFieldT (DFReal r) = r
-    fromDataFieldT v = error $ "fromDataFieldT is not a Double: " ++ show v
-    toDataFieldT = DFReal
+    fromDataField (DFReal r) = r
+    fromDataField v = error $ "fromDataFieldT is not a Double: " ++ show v
+    toDataField = DFReal
 
 instance DataField ByteString where
-    fromDataFieldT (DFByteString bs) = bs
-    fromDataFieldT v = error $ "fromDataFieldT is not a ByteString: " ++ show v
-    toDataFieldT = DFByteString
+    fromDataField (DFByteString bs) = bs
+    fromDataField v = error $ "fromDataFieldT is not a ByteString: " ++ show v
+    toDataField = DFByteString
   
 type DataDescriptiveField =
-    (DataStructureCode, DataTypeCode, TruncedEscapeSequence, String, [(String, DataFormat)])
+    (DataStructureCode, DataTypeCode, LexicalLevel, String, [(String, DataFormat)])
 
 data DataStructureCode = 
     SingleDataItem | LinearStructure | MultiDimStructure
@@ -88,7 +87,7 @@ data DataTypeCode =
     CharacterString | ImplicitPointInt | ImplicitPointReal | BinaryForm | MixedDataType
     deriving (Eq, Show)
 
-data TruncedEscapeSequence = 
+data LexicalLevel = 
     LexicalLevel0 | LexicalLevel1 | LexicalLevel2
     deriving (Eq, Enum, Show)
 
@@ -106,7 +105,6 @@ data DataStructure = SD DataFieldT
                    | MDS [Map String DataFieldT]
                    deriving (Show, Eq)
 
-
 --
 -- internal type definitions
 --
@@ -114,7 +112,7 @@ data DataStructure = SD DataFieldT
 type DataDescr = (DataStructureCode, [String])
 
 type FieldControlField = 
-    (DataStructureCode, DataTypeCode, TruncedEscapeSequence, String, [(String, String)])
+    (DataStructureCode, DataTypeCode, LexicalLevel, String, [(String, String)])
 
 instance Enum DataTypeCode where
     toEnum 0 = CharacterString
@@ -128,6 +126,18 @@ instance Enum DataTypeCode where
     fromEnum ImplicitPointReal = 2
     fromEnum BinaryForm = 5
     fromEnum MixedDataType = 6
+
+
+dsSingleData :: DataStructure -> DataFieldT
+dsSingleData (SD f) = f
+dsSingleData t = error $ "not a Single Data Item: " ++ show t
+dsLinearStruct :: DataStructure -> (Map String DataFieldT)
+dsLinearStruct (LS fs) = fs
+dsLinearStruct t = error $ "not a Linear Structure: " ++ show t
+dsMultiDimStruct :: DataStructure -> [Map String DataFieldT]
+dsMultiDimStruct (MDS fss) = fss 
+dsMultiDimStruct t = error $ "not a Multi Dim Structure: " ++ show t
+
 
 
 --
@@ -190,7 +200,7 @@ ddrParserLookup ddr t = do
   dfsParser dfs esc sc
 
 dfsParser :: 
-    [(String, DataFormat)] -> TruncedEscapeSequence -> DataStructureCode 
+    [(String, DataFormat)] -> LexicalLevel -> DataStructureCode 
     -> Parser DataStructure
 dfsParser dfs esc sc =
     let mfp = sequence $ map fieldParser $ dfs
@@ -212,7 +222,7 @@ dfsParser dfs esc sc =
 
 
 
-dataFormatToParser :: TruncedEscapeSequence -> DataFormat  -> Parser DataFieldT
+dataFormatToParser :: LexicalLevel -> DataFormat  -> Parser DataFieldT
 dataFormatToParser esc (CharacterData l) = fmap DFString $
     case l of
       Nothing -> C8.anyChar `manyTill` (try $ parseUT)
@@ -368,7 +378,7 @@ parseEntryMap = do
 parseInt :: Int -> Parser Int
 parseInt l = fmap read (count l $ C8.anyChar)
 
-parseDDFCtrl :: Parser (DataStructureCode, DataTypeCode, Char, Char, TruncedEscapeSequence)
+parseDDFCtrl :: Parser (DataStructureCode, DataTypeCode, Char, Char, LexicalLevel)
 parseDDFCtrl = do 
     s <- parseInt 1 <?> "data structure code"
     t <- parseInt 1 <?> "data type code"

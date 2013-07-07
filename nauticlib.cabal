@@ -47,7 +47,8 @@ library
   hs-source-dirs:      src  
   
   -- Modules exported by the library.
-  exposed-modules:     Data.S57.ISO8211
+  exposed-modules:      Data.S57,
+                        Data.S57.ISO8211
 
   -- Modules included in this library but not exported.
   --other-modules:       Digimil.Util
@@ -55,6 +56,8 @@ library
   -- Other library packages from which modules are imported.
   build-depends:       base,
                        bytestring,
+                       time,
+                       old-locale,
                        containers,
                        binary,
                        attoparsec
