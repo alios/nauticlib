@@ -141,6 +141,7 @@ dsMultiDimStruct t = error $ "not a Multi Dim Structure: " ++ show t
 parseDataFile :: Parser DataFile
 parseDataFile = do
   ddr <- parseDDR <?> "data descriptive record"
+
   drs <- manyTill (parseDR ddr) (try endOfInput) <?> "data record"
   return (ddr, drs)
 
@@ -161,7 +162,8 @@ parseDDR' = do
              (parseDataDescriptiveField fcl sFieldTagF) b) | (a,b) <- rs]
 
   let ddr =  DDR fname fstruct $ Map.fromList rs'
-  return ((ichglvl, lid, ext, ver, appi, extCharSet), ddr)
+  let retval = ((ichglvl, lid, ext, ver, appi, extCharSet), ddr)
+  return retval
 
 parseDR :: DataDescriptiveRecord -> Parser DataRecord
 parseDR ddr = fmap snd (parseDR' ddr)

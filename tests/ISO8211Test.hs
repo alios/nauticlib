@@ -8,13 +8,17 @@ import qualified Data.ByteString as BS
 import Text.Show.Pretty (ppShow)
 import System.IO
 
+--fn = "/home/alios/src/nauticlib/test_data/ENC_ROOT/US5FL12M/US5FL12M.002"
+--fn = "/home/alios/src/nauticlib/test_data/ENC_ROOT/CATALOG.031"
+fn = "/home/alios/tmp/US5TX51M.000"
+
 
 main = do
- r <- fmap (parseOnly parseDataFile ) $ BS.readFile "/home/alios/tmp/US5TX51M.000"
+ r <- fmap (parseOnly parseDataFile ) $ BS.readFile fn
  case r of
    Left err -> print err
-   Right f -> do
-          putStr . ppShow . vrids $ f
+   Right f@(ddr, rs) -> do
+          putStr . ppShow $ vrids f
           print ""
 {-          print $ dsid_uadt f
           print $ dsid_prsp f

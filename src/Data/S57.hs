@@ -25,6 +25,7 @@ module Data.S57 (
   -- ** Feature records
   -- ** Spatial records
   VRID (..), vrid, vrids,
+  SG3D (..),
   
   -- * Other data types
   PRSP (..),
@@ -50,38 +51,38 @@ type AGEN = Integer
 
 -- | Data set Identification field structure 'DSID'
 data DSID = DSID {
-      dsid_rcnm :: Word32, -- ^ Record name
-      dsid_rcid :: Integer, -- ^ Record identification number
-      dsid_expp :: EXPP, -- ^ Exchange purpose
-      dsid_intu :: Integer, -- ^ Intended usage. A numeric value indicating the inteded usage for wich the data has been compiled.
-      dsid_dsnm :: String, -- ^ Data set name
-      dsid_edtn :: String, -- ^ Edition number
-      dsid_updn :: String, -- ^ Update number
-      dsid_uadt :: Day, -- ^ Update application date 
-      dsid_isdt :: Day, -- ^ Issue date
-      dsid_sted :: Double, -- ^ Edition number of S-57 (3.0, 3.1)
-      dsid_prsp :: PRSP, -- ^ Product specification
-      dsid_psdn :: String, -- ^ Product specification description. A string identifying a non standard product specification
-      dsid_pred :: String, -- ^ Product specification edition number
-      dsid_prof :: PROF, -- ^ Application profile identification
-      dsid_agen :: AGEN, -- ^ Producing agency
-      dsid_comt  :: String, -- ^ Comment
-      dsid_dssi :: DSSI -- ^ Data set structure information field
+      dsid_rcnm :: !Word32, -- ^ Record name
+      dsid_rcid :: !Integer, -- ^ Record identification number
+      dsid_expp :: !EXPP, -- ^ Exchange purpose
+      dsid_intu :: !Integer, -- ^ Intended usage. A numeric value indicating the inteded usage for wich the data has been compiled.
+      dsid_dsnm :: !String, -- ^ Data set name
+      dsid_edtn :: !String, -- ^ Edition number
+      dsid_updn :: !String, -- ^ Update number
+      dsid_uadt :: Maybe Day, -- ^ Update application date 
+      dsid_isdt :: !Day, -- ^ Issue date
+      dsid_sted :: !Double, -- ^ Edition number of S-57 (3.0, 3.1)
+      dsid_prsp :: !PRSP, -- ^ Product specification
+      dsid_psdn :: !String, -- ^ Product specification description. A string identifying a non standard product specification
+      dsid_pred :: !String, -- ^ Product specification edition number
+      dsid_prof :: !PROF, -- ^ Application profile identification
+      dsid_agen :: !AGEN, -- ^ Producing agency
+      dsid_comt  :: !String, -- ^ Comment
+      dsid_dssi :: !DSSI -- ^ Data set structure information field
     } deriving (Eq, Show)
   
 -- | Data set structure information field 'DSSI'
 data DSSI = DSSI {
-      dssi_dstr :: DSTR, -- ^ Data structure
-      dssi_aall :: LexicalLevel, -- ^ 'ATTF' lexical level
-      dssi_nall :: LexicalLevel, -- ^ 'NATF' lecical level
-      dssi_nomr :: Integer, -- ^ Number of meta records
-      dssi_nocr :: Integer, -- ^ Number of cartographic records
-      dssi_nogr :: Integer, -- ^ Number of geo records
-      dssi_nolr :: Integer, -- ^ Number of collection records
-      dssi_noin :: Integer, -- ^ Number of isolated node records
-      dssi_nocn :: Integer, -- ^ Number of connected node records
-      dssi_noed :: Integer, -- ^ Number of edge records
-      dssi_nofa :: Integer  -- ^ Number of face records    
+      dssi_dstr :: !DSTR, -- ^ Data structure
+      dssi_aall :: !LexicalLevel, -- ^ 'ATTF' lexical level
+      dssi_nall :: !LexicalLevel, -- ^ 'NATF' lecical level
+      dssi_nomr :: !Integer, -- ^ Number of meta records
+      dssi_nocr :: !Integer, -- ^ Number of cartographic records
+      dssi_nogr :: !Integer, -- ^ Number of geo records
+      dssi_nolr :: !Integer, -- ^ Number of collection records
+      dssi_noin :: !Integer, -- ^ Number of isolated node records
+      dssi_nocn :: !Integer, -- ^ Number of connected node records
+      dssi_noed :: !Integer, -- ^ Number of edge records
+      dssi_nofa :: !Integer  -- ^ Number of face records    
     } deriving (Eq, Show)
 
 
@@ -105,10 +106,17 @@ data CATX = CATX
 
 -- | Vector record
 data VRID = VRID {
-      vrid_rcnm :: VRID_RCNM, -- ^ Record name
-      vrid_rcid :: Word32, -- ^ Record identification number 
-      vrid_rver :: Integer, -- ^ Record version
-      vrid_ruin :: RUIN -- ^ Record update instruction
+      vrid_rcnm :: !VRID_RCNM, -- ^ Record name
+      vrid_rcid :: !Word32, -- ^ Record identification number 
+      vrid_rver :: !Integer, -- ^ Record version
+      vrid_ruin :: !RUIN, -- ^ Record update instruction
+      vrid_sg3ds :: [SG3D] -- ^ -- 3-D coodriunat (Sounding Array) field
+} deriving (Eq, Show)
+
+data SG3D = SG3D {
+      sg3d_ycoo :: !Integer, -- ^ Coordinat in Y axis
+      sg3d_xcoo :: !Integer, -- ^ Coordinat in X axis
+      sg3d_ve3d :: !Integer -- ^ 3-D (sounding) value
 } deriving (Eq, Show)
 
 
@@ -187,72 +195,106 @@ mkDSSI :: DataRecord -> DSSI
 mkDSSI r = 
     let dssi = findSubRecord "DSSI" r
     in DSSI {
-             dssi_dstr = fromDataField $ subRecordField "DSTR" dssi,
-             dssi_aall = fromDataField $ subRecordField "AALL" dssi,
-             dssi_nall = fromDataField $ subRecordField "NALL" dssi,
-             dssi_nomr = fromDataField $ subRecordField "NOMR" dssi,
-             dssi_nocr = fromDataField $ subRecordField "NOCR" dssi,
-             dssi_nogr = fromDataField $ subRecordField "NOGR" dssi,
-             dssi_nolr = fromDataField $ subRecordField "NOLR" dssi,
-             dssi_noin = fromDataField $ subRecordField "NOIN" dssi,
-             dssi_nocn = fromDataField $ subRecordField "NOCN" dssi,
-             dssi_noed = fromDataField $ subRecordField "NOED" dssi,
-             dssi_nofa = fromDataField $ subRecordField "NOFA" dssi
+             dssi_dstr = sdRecordField dssi "DSTR",
+             dssi_aall = sdRecordField dssi  "AALL",
+             dssi_nall = sdRecordField dssi  "NALL",
+             dssi_nomr = sdRecordField dssi  "NOMR",
+             dssi_nocr = sdRecordField dssi  "NOCR",
+             dssi_nogr = sdRecordField dssi  "NOGR",
+             dssi_nolr = sdRecordField dssi  "NOLR",
+             dssi_noin = sdRecordField dssi  "NOIN",
+             dssi_nocn = sdRecordField dssi  "NOCN",
+             dssi_noed = sdRecordField dssi  "NOED",
+             dssi_nofa = sdRecordField dssi "NOFA"
            }
 
 
-vrids :: DataFile -> [VRID]
-vrids = map vrid . findRecordsByTag "VRID"
+--vrids :: DataFile -> [VRID]
+vrids = map vrid .  findRecordsByTag "VRID"
 
-vrid :: DataRecord -> VRID
-vrid dr =
-    let x = 1
-    in VRID {
+vrid    :: DataRecord -> VRID
+vrid dr = VRID {
              vrid_rcnm = sdRecordField dr "RCNM",
              vrid_rcid = sdRecordField dr "RCID",
              vrid_rver = sdRecordField dr "RVER",
-             vrid_ruin = sdRecordField dr "RUIN"
+             vrid_ruin = sdRecordField dr "RUIN",
+             vrid_sg3ds = sg3ds dr
            }
+
+sg3ds :: DataRecord -> [SG3D]
+sg3ds r = maybe [] (map sg3d) $ mdRecords' "SG3D" r
+
+sg3d :: Map.Map String DataFieldT -> SG3D
+sg3d m = SG3D {
+      sg3d_ycoo = mdRecordField "YCOO" m,
+      sg3d_xcoo = mdRecordField "XCOO" m,
+      sg3d_ve3d = mdRecordField "VE3D" m
+         }
 
 --
 -- helper functions
 --
 
+dropISORoot :: DataRecord -> DataRecord
+dropISORoot r 
+    | ((fst $ rootLabel r) == "0001") = head . subForest $ r
+    | otherwise = error $ "node is not a ISO 8211 Record Identifier:" ++ show r
 
 findRecordsByTag :: String -> DataFile -> [DataRecord]
 findRecordsByTag t (_, rs) =
-    let p n = isJust $ find (\n' -> (fst $ rootLabel n') == t) (subForest n)
-    in filter p rs
+    filter (\n -> (fst . rootLabel $ n) == t) $ map dropISORoot rs
 
+findRecordByTag' :: String -> DataFile -> Maybe DataRecord
+findRecordByTag' t f = 
+    case (findRecordsByTag t f) of
+      [] -> Nothing
+      (x:_) -> Just x
 
-findRecordByTag t f = head $ findRecordsByTag t f
+findRecordByTag :: String -> DataFile -> DataRecord
+findRecordByTag t f = 
+    maybe (error $ "unable to findRecordByTag: " ++ t)
+          id $ findRecordByTag' t f
 
-findRecordField :: String ->  DataRecord -> DataFieldT
-findRecordField t dr = 
-   let fs = (dsLinearStruct . snd . rootLabel . head . subForest $ dr)
+findRecordFieldLS :: String ->  DataRecord -> DataFieldT
+findRecordFieldLS t dr = 
+   let fs = dsLinearStruct . snd . rootLabel $ dr
    in case (t `Map.lookup` fs) of
         Nothing -> error $ "unable to find subfield: " ++ t
         Just f -> f
 
 
+findSubRecords :: String -> DataRecord -> [DataRecord]
+findSubRecords t dr =
+    filter (\n -> (fst $ rootLabel n) == t) (subForest dr)
+
+
+findSubRecord' :: String -> DataRecord -> Maybe DataRecord
+findSubRecord' t r = 
+    case (findSubRecords t r) of
+      [] -> Nothing
+      (x:_) -> Just x
+
 findSubRecord :: String -> DataRecord -> DataRecord
-findSubRecord t dr = 
-    let srs = subForest . head . subForest $ dr
-        p = (== t) . fst .  rootLabel
-    in case (find p srs) of
-         Nothing -> error $ "unable to find record with tag: " ++ t
-         Just r -> r
-
-subRecordValue :: DataRecord -> DataStructure
-subRecordValue = snd . rootLabel
-
-subRecordField :: String -> DataRecord -> DataFieldT
-subRecordField t r = case ((Map.lookup t) . dsLinearStruct . subRecordValue $ r) of
-                     Nothing -> error $ "unable to find sub record field: " ++ t
-                     Just f -> f
+findSubRecord t r = 
+    maybe (error $ "unable to findSubRecordByTag: " ++ t)
+          id $ findSubRecord' t r
 
 sdRecordField :: DataField t => DataRecord -> String -> t
-sdRecordField dr t = fromDataField (findRecordField t dr)
+sdRecordField dr t = fromDataField (findRecordFieldLS t dr)
+
+mdRecords' :: String -> DataRecord -> Maybe [Map.Map String DataFieldT]
+mdRecords' t r = maybe Nothing (Just . dsMultiDimStruct . snd . rootLabel) 
+                 $ findSubRecord' t r
+
+mdRecords :: String -> DataRecord -> [Map.Map String DataFieldT]
+mdRecords t r = 
+    maybe (error $ "unable to find mdRecord: " ++ t) id 
+              $ mdRecords' t r
+                  
+mdRecordField :: DataField c => String -> Map.Map String DataFieldT -> c
+mdRecordField t m = 
+    fromDataField . maybe (error $ "unable to find tag: " ++ t) id 
+      $ t `Map.lookup` m
 
 
 --
@@ -327,11 +369,15 @@ instance DataField PROF where
           i -> error $ "invalid PROF: " ++ show i
     fromDataField f = error $ "unable to decode PROF from:" ++ show f
 
-instance DataField Day where
+
+instance DataField (Maybe Day) where
     fromDataField (DFString s) = 
-        maybe (error $ "unable to parse date: " ++ s) id $
         parseTime defaultTimeLocale "%Y%m%d" s
     fromDataField f = error $ "unable to decode Date from:" ++ show f
+    
+instance DataField Day where
+    fromDataField f = 
+        maybe (error $ "unable to parse date: " ++ show f) id $ fromDataField f
  
 
 instance DataField LexicalLevel where
