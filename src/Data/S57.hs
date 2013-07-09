@@ -95,8 +95,8 @@ type AGEN = Integer
 
 -- | a S-57 Datafile
 data DataFileS57 = DataFileS57 {
-      df_dsid :: !DSID,
-      df_dspm :: !DSPM,
+      df_dsid :: !(Maybe DSID),
+      df_dspm :: !(Maybe DSPM),
       df_vrids :: !([VRID])
 } deriving (Eq, Show)
 
@@ -305,17 +305,22 @@ data RUIN
 s57dataFile :: DataFile -> DataFileS57
 s57dataFile f =
     let dspm' = dspm f
+        vrids' =
+            case dspm' of
+              Nothing -> []
+              Just dspm'' -> vrids dspm'' f
     in DataFileS57 {
              df_dsid = dsid f,
              df_dspm = dspm',
-             df_vrids = vrids dspm' f
+             df_vrids = vrids'
            }
 
 -- | get the 'DSID' from a ISO-8211 'DataFile' 
-dsid :: DataFile -> DSID
+dsid :: DataFile -> Maybe DSID
 dsid df = 
- let dr = findRecordByTag "DSID" df 
- in DSID {
+ case (findRecordByTag' "DSID" df) of
+   Nothing -> Nothing
+   Just dr -> Just DSID {
           dsid_rcnm = sdRecordField dr "RCNM",
           dsid_rcid = sdRecordField dr "RCID",
           dsid_expp = sdRecordField dr "EXPP",
@@ -336,26 +341,27 @@ dsid df =
         }
     
 dssi :: DataRecord -> DSSI
-dssi r = 
+dssi r =  
     let dr = findSubRecord "DSSI" r
     in DSSI {
-             dssi_dstr = sdRecordField dr "DSTR",
-             dssi_aall = sdRecordField dr "AALL",
-             dssi_nall = sdRecordField dr "NALL",
-             dssi_nomr = sdRecordField dr "NOMR",
-             dssi_nocr = sdRecordField dr "NOCR",
-             dssi_nogr = sdRecordField dr "NOGR",
-             dssi_nolr = sdRecordField dr "NOLR",
-             dssi_noin = sdRecordField dr "NOIN",
-             dssi_nocn = sdRecordField dr "NOCN",
-             dssi_noed = sdRecordField dr "NOED",
-             dssi_nofa = sdRecordField dr "NOFA"
+                  dssi_dstr = sdRecordField dr "DSTR",
+                  dssi_aall = sdRecordField dr "AALL",
+                  dssi_nall = sdRecordField dr "NALL",
+                  dssi_nomr = sdRecordField dr "NOMR",
+                  dssi_nocr = sdRecordField dr "NOCR",
+                  dssi_nogr = sdRecordField dr "NOGR",
+                  dssi_nolr = sdRecordField dr "NOLR",
+                  dssi_noin = sdRecordField dr "NOIN",
+                  dssi_nocn = sdRecordField dr "NOCN",
+                  dssi_noed = sdRecordField dr "NOED",
+                  dssi_nofa = sdRecordField dr "NOFA"
            }
 
-dspm :: DataFile -> DSPM
+dspm :: DataFile -> Maybe DSPM
 dspm df = 
- let dr = findRecordByTag "DSPM" df 
- in DSPM {
+ case (findRecordByTag' "DSPM" df) of
+   Nothing -> Nothing
+   Just dr -> Just  DSPM {
       dspm_rcnm = sdRecordField dr "RCNM",
       dspm_rcid = sdRecordField dr "RCID",
       dspm_hdat = sdRecordField dr "HDAT",
