@@ -25,6 +25,9 @@ module Data.S57 (
   -- ** Feature records
   -- ** Spatial records
   VRID (..), vrid, vrids,
+  ATTV (..),
+  VRPC (..),
+  SG2D (..),
   SG3D (..),
   
   -- * Other data types
@@ -110,9 +113,32 @@ data VRID = VRID {
       vrid_rcid :: !Word32, -- ^ Record identification number 
       vrid_rver :: !Integer, -- ^ Record version
       vrid_ruin :: !RUIN, -- ^ Record update instruction
-      vrid_sg3ds :: [SG3D] -- ^ -- 3-D coodriunat (Sounding Array) field
+      vrid_attvs :: [ATTV], -- ^ Attribute Fields
+      vrid_vrpc :: Maybe VRPC, -- ^ Pointer Control Field
+      vrid_sg2ds :: [SG2D], -- ^ 2-D coodrinate fields
+      vrid_sg3ds :: [SG3D]  -- ^ 3-D coodrinate (Sounding Array) fields
 } deriving (Eq, Show)
 
+-- | Vector record attribute
+data ATTV = ATTV {
+      attv_attl :: !Integer, -- ^ Attribute label/code
+      attv_atvl :: String -- ^ Attribute value
+    } deriving (Eq, Show)
+
+-- | Vector record pointer control
+data VRPC = VRPC {
+      vrpc_vpui :: !RUIN, -- ^ Vector record pointer update instruction
+      vrpc_vpix :: Integer, -- ^ Vector record pointer index
+      vrpc_nvpt :: Integer -- ^ Number of record pointers
+    } deriving (Eq, Show)
+
+-- | 2-D coodrinate fields
+data SG2D = SG2D {
+      sg2d_ycoo :: !Integer, -- ^ Coordinat in Y axis
+      sg2d_xcoo :: !Integer  -- ^ Coordinat in X axis
+} deriving (Eq, Show)
+
+-- | 3-D coodrinate (Sounding Array) fields
 data SG3D = SG3D {
       sg3d_ycoo :: !Integer, -- ^ Coordinat in Y axis
       sg3d_xcoo :: !Integer, -- ^ Coordinat in X axis
@@ -188,28 +214,28 @@ dsid df =
           dsid_prof = sdRecordField dr "PROF",
           dsid_agen = sdRecordField dr "AGEN",
           dsid_comt = sdRecordField dr "COMT",
-          dsid_dssi = mkDSSI dr
+          dsid_dssi = dssi dr
         }
     
-mkDSSI :: DataRecord -> DSSI
-mkDSSI r = 
-    let dssi = findSubRecord "DSSI" r
+dssi :: DataRecord -> DSSI
+dssi r = 
+    let dr = findSubRecord "DSSI" r
     in DSSI {
-             dssi_dstr = sdRecordField dssi "DSTR",
-             dssi_aall = sdRecordField dssi  "AALL",
-             dssi_nall = sdRecordField dssi  "NALL",
-             dssi_nomr = sdRecordField dssi  "NOMR",
-             dssi_nocr = sdRecordField dssi  "NOCR",
-             dssi_nogr = sdRecordField dssi  "NOGR",
-             dssi_nolr = sdRecordField dssi  "NOLR",
-             dssi_noin = sdRecordField dssi  "NOIN",
-             dssi_nocn = sdRecordField dssi  "NOCN",
-             dssi_noed = sdRecordField dssi  "NOED",
-             dssi_nofa = sdRecordField dssi "NOFA"
+             dssi_dstr = sdRecordField dr "DSTR",
+             dssi_aall = sdRecordField dr "AALL",
+             dssi_nall = sdRecordField dr "NALL",
+             dssi_nomr = sdRecordField dr "NOMR",
+             dssi_nocr = sdRecordField dr "NOCR",
+             dssi_nogr = sdRecordField dr "NOGR",
+             dssi_nolr = sdRecordField dr "NOLR",
+             dssi_noin = sdRecordField dr "NOIN",
+             dssi_nocn = sdRecordField dr "NOCN",
+             dssi_noed = sdRecordField dr "NOED",
+             dssi_nofa = sdRecordField dr "NOFA"
            }
 
 
---vrids :: DataFile -> [VRID]
+vrids :: DataFile -> [VRID]
 vrids = map vrid .  findRecordsByTag "VRID"
 
 vrid    :: DataRecord -> VRID
@@ -218,11 +244,44 @@ vrid dr = VRID {
              vrid_rcid = sdRecordField dr "RCID",
              vrid_rver = sdRecordField dr "RVER",
              vrid_ruin = sdRecordField dr "RUIN",
+             vrid_attvs = attvs dr,
+             vrid_vrpc = vrpc dr,
+             vrid_sg2ds = sg2ds dr,
              vrid_sg3ds = sg3ds dr
            }
 
+vrpc :: DataRecord -> Maybe VRPC
+vrpc r = 
+    case (findSubRecord' "VRPC" r) of
+      Nothing -> Nothing 
+      Just dr -> Just VRPC {
+                  vrpc_vpui = sdRecordField dr "VPUI",
+                  vrpc_vpix = sdRecordField dr "VPIX",
+                  vrpc_nvpt = sdRecordField dr "NVPT"
+                }
+
+   
+
+attvs :: DataRecord -> [ATTV]
+attvs = maybemdRecords "ATTV" attv
+
+attv :: Map.Map String DataFieldT -> ATTV
+attv m = ATTV {
+         attv_attl = mdRecordField "ATTL" m,
+         attv_atvl = mdRecordField "ATVL" m
+       }
+
+sg2ds :: DataRecord -> [SG2D]
+sg2ds = maybemdRecords "SG2D" sg2d
+
+sg2d :: Map.Map String DataFieldT -> SG2D
+sg2d m = SG2D {
+      sg2d_ycoo = mdRecordField "YCOO" m,
+      sg2d_xcoo = mdRecordField "XCOO" m
+         }
+
 sg3ds :: DataRecord -> [SG3D]
-sg3ds r = maybe [] (map sg3d) $ mdRecords' "SG3D" r
+sg3ds = maybemdRecords "SG3D" sg3d
 
 sg3d :: Map.Map String DataFieldT -> SG3D
 sg3d m = SG3D {
@@ -295,6 +354,10 @@ mdRecordField :: DataField c => String -> Map.Map String DataFieldT -> c
 mdRecordField t m = 
     fromDataField . maybe (error $ "unable to find tag: " ++ t) id 
       $ t `Map.lookup` m
+
+maybemdRecords ::
+  String -> (Map.Map String DataFieldT -> a) -> DataRecord -> [a]
+maybemdRecords t c r = maybe [] (map c) $ mdRecords' t r
 
 
 --
