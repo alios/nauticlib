@@ -6,7 +6,7 @@ module Data.S57 (
   -- * Record types
   -- ** Data set descriptive records
   -- *** Data set general information record (DSID)
-  DSID (..), dsid,
+  DSID (..),
   DSSI (..),
   -- *** Data set geographic reference record (DSPM)
   DSPM (..),
@@ -24,9 +24,20 @@ module Data.S57 (
   CATX (..),
 
   -- ** Data dictionary records
+  -- *** Data dictionary definition
+  DDDF (..),
+  DDDR (..),
+  -- *** Data dictionary domain
+  DDDI (..),
+  DDOM (..),
+  DDRF (..),
+  -- *** Data dictionary schema
+  DDSI (..),
+  DDSC (..),
+
   -- ** Feature records
   -- ** Spatial records
-  VRID (..), vrid, vrids,
+  VRID (..),
   ATTV (..),
   VRPC (..),
   SG2D (..),
@@ -146,12 +157,31 @@ data DSRC = DSRC {
 
 -- | Data set history recrord (DSHT)
 data DSHT = DSHT
+
 -- | Data set accuracy record (DSAC)
 data DSAC = DSAC
+
+
 -- | Catalogue directory record (CATD)
 data CATD = CATD
 -- | Catalogue cross refernce record (CATX)
 data CATX = CATX
+
+data DDDF = DDDF
+
+data DDDR = DDDR
+
+data DDDI = DDDI
+
+data DDOM = DDOM
+
+data DDRF = DDRF
+
+data DDSI = DDSI
+
+data DDSC = DDSC
+
+
 
 -- | Vector record
 data VRID = VRID {
