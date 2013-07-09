@@ -80,7 +80,11 @@ module Data.S57 (
   EXPP (..),
   DSTR (..),
   VRID_RCNM (..),
-  RUIN (..)
+  RUIN (..),
+  Orientation,
+  UsageIndicator,
+  TopologyIndicator,
+  MaskingIndicator
 ) where
 
 import Data.S57.ISO8211
