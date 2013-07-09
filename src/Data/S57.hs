@@ -111,15 +111,39 @@ data DSPM = DSPM {
       dspm_coun :: COUN, -- ^ Coordinate Units
       dspm_comf :: Integer, -- ^ Coordinate muliplication factor
       dspm_somf :: Integer, -- ^ 3-D (sounding) multiplication factor
-      dspm_comt :: String
+      dspm_comt :: String, -- ^ Comment
+      dspm_dspr :: Maybe DSPR, -- ^ Data set projection
+      dspm_dsrc :: [DSRC] -- ^ Data set registration control fields
+} deriving (Eq, Show)
+
+-- | Data set projection field (DSPR)
+data DSPR = DSPR {
+      dspr_proj :: Word8, -- ^ Projection
+      dspr_prp1 :: Integer, -- ^ Projection Parameter 1
+      dspr_prp2 :: Integer, -- ^ Projection Parameter 2
+      dspr_prp3 :: Integer, -- ^ Projection Parameter 3
+      dspr_prp4 :: Integer, -- ^ Projection Parameter 4
+      dspr_feas :: Double,  -- ^ False Easting
+      dspr_fnor :: Double, -- ^ False Northing
+      dspr_fpmf :: Integer, -- ^ Floating Point mulitiplication factor
+      dspr_comt :: String
 } deriving (Eq, Show)
 
 
-
--- | Data set projection field (DSPR)
-data DSPR = DSPR
 -- | Data set registration conrol (DSRC)
-data DSRC = DSRC
+data DSRC = DSRC {
+      dsrc_rpid :: Word8, -- ^ Registration point ID
+      dsrc_ryco :: Double, -- ^ Registration point Latitude or Northing
+      dsrc_rxco :: Double, -- ^ Registration point Longitude or Easting
+      dsrc_curp :: COUN, -- ^ Coordinate units for registration point
+      dsrc_fpmf :: Integer, -- ^ Floating point mulitplication factor
+      dsrc_rxvl :: Double, -- ^ Registration point X-value
+      dsrc_ryvl :: Double, -- ^ Registration point Y-value
+      dsrc_comt :: String -- ^ Comment
+} deriving (Eq,Show)
+
+
+
 -- | Data set history recrord (DSHT)
 data DSHT = DSHT
 -- | Data set accuracy record (DSAC)
@@ -156,15 +180,15 @@ data VRPC = VRPC {
 
 -- | 2-D coodrinate fields
 data SG2D = SG2D {
-      sg2d_ycoo :: !Integer, -- ^ Coordinat in Y axis
-      sg2d_xcoo :: !Integer  -- ^ Coordinat in X axis
+      sg2d_ycoo :: !Double, -- ^ Coordinat in Y axis
+      sg2d_xcoo :: !Double  -- ^ Coordinat in X axis
 } deriving (Eq, Show)
 
 -- | 3-D coodrinate (Sounding Array) fields
 data SG3D = SG3D {
-      sg3d_ycoo :: !Integer, -- ^ Coordinat in Y axis
-      sg3d_xcoo :: !Integer, -- ^ Coordinat in X axis
-      sg3d_ve3d :: !Integer -- ^ 3-D (sounding) value
+      sg3d_ycoo :: !Double, -- ^ Coordinat in Y axis
+      sg3d_xcoo :: !Double, -- ^ Coordinat in X axis
+      sg3d_ve3d :: !Double -- ^ 3-D (sounding) value
 } deriving (Eq, Show)
 
 
@@ -220,11 +244,13 @@ data RUIN
 -- exported functions
 --
 s57dataFile :: DataFile -> DataFileS57
-s57dataFile f = DataFileS57 {
-                 df_dsid = dsid f,
-                 df_dspm = dspm f,
-                 df_vrids = vrids f
-                }
+s57dataFile f =
+    let dspm' = dspm f
+    in DataFileS57 {
+             df_dsid = dsid f,
+             df_dspm = dspm',
+             df_vrids = vrids dspm' f
+           }
 
 -- | get the 'DSID' from a ISO-8211 'DataFile' 
 dsid :: DataFile -> DSID
@@ -267,8 +293,6 @@ dssi r =
              dssi_nofa = sdRecordField dr "NOFA"
            }
 
-
--- | get the 'DSID' from a ISO-8211 'DataFile' 
 dspm :: DataFile -> DSPM
 dspm df = 
  let dr = findRecordByTag "DSPM" df 
@@ -285,23 +309,65 @@ dspm df =
       dspm_coun = sdRecordField dr "COUN",
       dspm_comf = sdRecordField dr "COMF",
       dspm_somf = sdRecordField dr "SOMF",
-      dspm_comt = sdRecordField dr "COMT"
+      dspm_comt = sdRecordField dr "COMT",
+      dspm_dspr = dspr dr,
+      dspm_dsrc = dsrcs dr
 }
 
 
-vrids :: DataFile -> [VRID]
-vrids = map vrid .  findRecordsByTag "VRID"
 
-vrid    :: DataRecord -> VRID
-vrid dr = VRID {
+
+dspr :: DataRecord -> Maybe DSPR
+dspr r = case (findSubRecord' "DSPR" r) of
+           Nothing -> Nothing
+           Just dr -> Just DSPR {
+             dspr_proj = sdRecordField dr "PROJ", 
+             dspr_prp1 = sdRecordField dr "PRP1",
+             dspr_prp2 = sdRecordField dr "PRP2",
+             dspr_prp3 = sdRecordField dr "PRP3",
+             dspr_prp4 = sdRecordField dr "PRP4", 
+             dspr_feas = sdRecordField dr "FEAS", 
+             dspr_fnor = sdRecordField dr "FNOR", 
+             dspr_fpmf = sdRecordField dr "FPMF",
+             dspr_comt = sdRecordField dr "COMT"
+           }
+
+
+
+dsrcs :: DataRecord -> [DSRC]
+dsrcs = map dsrc . findSubRecords "DSRC"
+
+dsrc :: DataRecord -> DSRC
+dsrc dr = 
+    let fpmf,ryco,rxco :: Integer
+        fpmf = sdRecordField dr "FPMF"
+        ryco =  sdRecordField dr "RYCO"
+        rxco = sdRecordField dr "RXCO"
+
+    in DSRC {
+            dsrc_rpid = sdRecordField dr "RPID",
+            dsrc_ryco = (fromInteger ryco) / (fromInteger fpmf),
+            dsrc_rxco = (fromInteger rxco) / (fromInteger fpmf),
+            dsrc_curp = sdRecordField dr "CURP",
+            dsrc_fpmf = fpmf,
+            dsrc_rxvl = sdRecordField dr "RXVL",
+            dsrc_ryvl = sdRecordField dr "RYVL", 
+            dsrc_comt = sdRecordField dr "COMT"
+          }
+
+vrids :: DSPM -> DataFile -> [VRID]
+vrids dspm' df = map (vrid dspm') $ findRecordsByTag "VRID" df
+
+vrid    :: DSPM -> DataRecord -> VRID
+vrid dspm' dr = VRID {
              vrid_rcnm  = sdRecordField dr "RCNM",
              vrid_rcid  = sdRecordField dr "RCID",
              vrid_rver  = sdRecordField dr "RVER",
              vrid_ruin  = sdRecordField dr "RUIN",
              vrid_attvs = attvs dr,
              vrid_vrpc  = vrpc dr,
-             vrid_sg2ds = sg2ds dr,
-             vrid_sg3ds = sg3ds dr
+             vrid_sg2ds = sg2ds dspm' dr,
+             vrid_sg3ds = sg3ds dspm' dr
            }
 
 vrpc :: DataRecord -> Maybe VRPC
@@ -323,23 +389,35 @@ attv m = ATTV {
          attv_atvl = mdRecordField "ATVL" m
        }
 
-sg2ds :: DataRecord -> [SG2D]
-sg2ds = maybemdRecords "SG2D" sg2d
+sg2ds :: DSPM -> DataRecord -> [SG2D]
+sg2ds dspm' = maybemdRecords "SG2D" (sg2d dspm')
 
-sg2d :: Map.Map String DataFieldT -> SG2D
-sg2d m = SG2D {
-      sg2d_ycoo = mdRecordField "YCOO" m,
-      sg2d_xcoo = mdRecordField "XCOO" m
+sg2d :: DSPM -> Map.Map String DataFieldT -> SG2D
+sg2d dspm' m = 
+  let x, y :: Integer
+      x = mdRecordField "YCOO" m
+      y = mdRecordField "XCOO" m
+      mf = fromInteger $ dspm_comf dspm'
+  in SG2D {
+      sg2d_ycoo = (fromInteger y) / mf ,
+      sg2d_xcoo = (fromInteger x) / mf
          }
 
-sg3ds :: DataRecord -> [SG3D]
-sg3ds = maybemdRecords "SG3D" sg3d
+sg3ds :: DSPM -> DataRecord -> [SG3D]
+sg3ds dspm' = maybemdRecords "SG3D" (sg3d dspm')
 
-sg3d :: Map.Map String DataFieldT -> SG3D
-sg3d m = SG3D {
-      sg3d_ycoo = mdRecordField "YCOO" m,
-      sg3d_xcoo = mdRecordField "XCOO" m,
-      sg3d_ve3d = mdRecordField "VE3D" m
+sg3d :: DSPM -> Map.Map String DataFieldT -> SG3D
+sg3d dspm' m = 
+  let x, y, s :: Integer
+      x = mdRecordField "YCOO" m
+      y = mdRecordField "XCOO" m
+      s = mdRecordField "VE3D" m
+      comf = fromInteger $ dspm_comf dspm'
+      somf = fromInteger $ dspm_somf dspm'
+  in SG3D {
+           sg3d_ycoo = (fromInteger y) / comf,
+           sg3d_xcoo = (fromInteger x) / comf,
+           sg3d_ve3d = (fromInteger s) / somf
          }
 
 --
