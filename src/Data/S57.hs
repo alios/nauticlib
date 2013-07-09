@@ -97,6 +97,14 @@ import System.Locale
 import qualified Data.Map as Map
 import Data.Word
 import Data.ByteString (ByteString)
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BL
+import Data.Binary
+import Data.Binary.Get
+
+
+
+
 type AGEN = Integer
 
 -- | a S-57 Datafile
@@ -248,7 +256,7 @@ data VRPC = VRPC {
 
 -- | Vector record pointer
 data VRPT = VRPT {
-      vrpt_name :: !ByteString, -- ^ Name
+      vrpt_name :: !Name, -- ^ Name
       vrpt_ornt :: !(Maybe Orientation), -- ^ Orientation
       vrpt_usag :: !(Maybe UsageIndicator), -- ^ Usage indicator
       vrpt_topi :: !(Maybe TopologyIndicator), -- ^ Topology indicator
@@ -277,6 +285,7 @@ data SG3D = SG3D {
 } deriving (Eq, Show)
 
 
+type Name = (Word8, Word32)
 
 --
 -- exported functions
@@ -814,6 +823,11 @@ instance DataField (Maybe TopologyIndicator) where
           255 -> Nothing
           i -> error $ "invalid Topology Indicator: " ++ show i
     fromDataField i = error $ "unable to decode Topology Indicator from:" ++ show i
+
+instance DataField Name where
+    fromDataField (DFByteString bs) = 
+        let (a,b) = BS.splitAt 1 bs        
+        in (BS.head a, runGet getWord32le $ BL.fromChunks [b])
 
 instance DataField (Maybe MaskingIndicator) where
     fromDataField (DFString s) = 
