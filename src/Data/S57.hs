@@ -24,19 +24,20 @@ module Data.S57 (
   CATX (..),
 
   -- ** Data dictionary records
-  -- *** Data dictionary definition
+  -- *** Data dictionary definition (DDDF)
   DDDF (..),
   DDDR (..),
-  -- *** Data dictionary domain
+  -- *** Data dictionary domain (DDDI)
   DDDI (..),
   DDOM (..),
   DDRF (..),
-  -- *** Data dictionary schema
+  -- *** Data dictionary schema (DDSI)
   DDSI (..),
   DDSC (..),
 
   -- ** Feature records
   -- ** Spatial records
+  -- *** Vector record (VRID)
   VRID (..),
   ATTV (..),
   VRPC (..),
