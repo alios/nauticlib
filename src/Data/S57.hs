@@ -67,9 +67,9 @@ type AGEN = Integer
 
 -- | a S-57 Datafile
 data DataFileS57 = DataFileS57 {
-      df_dsid :: DSID,
-      df_dspm :: DSPM,
-      df_vrids :: [VRID]
+      df_dsid :: !DSID,
+      df_dspm :: !DSPM,
+      df_vrids :: !([VRID])
 } deriving (Eq, Show)
 
 -- | Data set Identification field structure 'DSID'
@@ -81,7 +81,7 @@ data DSID = DSID {
       dsid_dsnm :: !String, -- ^ Data set name
       dsid_edtn :: !String, -- ^ Edition number
       dsid_updn :: !String, -- ^ Update number
-      dsid_uadt :: Maybe Day, -- ^ Update application date 
+      dsid_uadt :: !(Maybe Day), -- ^ Update application date 
       dsid_isdt :: !Day, -- ^ Issue date
       dsid_sted :: !Double, -- ^ Edition number of S-57 (3.0, 3.1)
       dsid_prsp :: !PRSP, -- ^ Product specification
@@ -89,7 +89,7 @@ data DSID = DSID {
       dsid_pred :: !String, -- ^ Product specification edition number
       dsid_prof :: !PROF, -- ^ Application profile identification
       dsid_agen :: !AGEN, -- ^ Producing agency
-      dsid_comt  :: !String, -- ^ Comment
+      dsid_comt :: !String, -- ^ Comment
       dsid_dssi :: !DSSI -- ^ Data set structure information field
     } deriving (Eq, Show)
   
@@ -111,47 +111,47 @@ data DSSI = DSSI {
 
 -- | Data set parameter field 'DSPM'
 data DSPM = DSPM {
-      dspm_rcnm :: Word8, -- ^ Record name
-      dspm_rcid :: Word32,  -- ^Record Identification number
-      dspm_hdat :: Word8, -- ^ Horizontal geodetic datum (HORDAT)
-      dspm_vdat :: Word8, -- ^ Vertical geodetic datum (VERDAT)
-      dspm_sdat :: Word8, -- ^ Sounding geodetic datum (VERDAT)
-      dspm_cscl :: Integer, -- ^ Compilation scale of data
-      dspm_duni :: Word8,  -- ^ Units of depth measurement
-      dspm_huni :: Word8, -- ^ Units of height measurement
-      dspm_puni :: Word8, -- ^ Units of postitional accuracy
-      dspm_coun :: COUN, -- ^ Coordinate Units
-      dspm_comf :: Integer, -- ^ Coordinate muliplication factor
-      dspm_somf :: Integer, -- ^ 3-D (sounding) multiplication factor
-      dspm_comt :: String, -- ^ Comment
-      dspm_dspr :: Maybe DSPR, -- ^ Data set projection
-      dspm_dsrc :: [DSRC] -- ^ Data set registration control fields
+      dspm_rcnm :: !Word8, -- ^ Record name
+      dspm_rcid :: !Word32,  -- ^Record Identification number
+      dspm_hdat :: !Word8, -- ^ Horizontal geodetic datum (HORDAT)
+      dspm_vdat :: !Word8, -- ^ Vertical geodetic datum (VERDAT)
+      dspm_sdat :: !Word8, -- ^ Sounding geodetic datum (VERDAT)
+      dspm_cscl :: !Integer, -- ^ Compilation scale of data
+      dspm_duni :: !Word8,  -- ^ Units of depth measurement
+      dspm_huni :: !Word8, -- ^ Units of height measurement
+      dspm_puni :: !Word8, -- ^ Units of postitional accuracy
+      dspm_coun :: !COUN, -- ^ Coordinate Units
+      dspm_comf :: !Integer, -- ^ Coordinate muliplication factor
+      dspm_somf :: !Integer, -- ^ 3-D (sounding) multiplication factor
+      dspm_comt :: !String, -- ^ Comment
+      dspm_dspr :: !(Maybe DSPR), -- ^ Data set projection
+      dspm_dsrc :: !([DSRC]) -- ^ Data set registration control fields
 } deriving (Eq, Show)
 
 -- | Data set projection field (DSPR)
 data DSPR = DSPR {
-      dspr_proj :: Word8, -- ^ Projection
-      dspr_prp1 :: Integer, -- ^ Projection Parameter 1
-      dspr_prp2 :: Integer, -- ^ Projection Parameter 2
-      dspr_prp3 :: Integer, -- ^ Projection Parameter 3
-      dspr_prp4 :: Integer, -- ^ Projection Parameter 4
-      dspr_feas :: Double,  -- ^ False Easting
-      dspr_fnor :: Double, -- ^ False Northing
-      dspr_fpmf :: Integer, -- ^ Floating Point mulitiplication factor
-      dspr_comt :: String
+      dspr_proj :: !Word8, -- ^ Projection
+      dspr_prp1 :: !Integer, -- ^ Projection Parameter 1
+      dspr_prp2 :: !Integer, -- ^ Projection Parameter 2
+      dspr_prp3 :: !Integer, -- ^ Projection Parameter 3
+      dspr_prp4 :: !Integer, -- ^ Projection Parameter 4
+      dspr_feas :: !Double,  -- ^ False Easting
+      dspr_fnor :: !Double, -- ^ False Northing
+      dspr_fpmf :: !Integer, -- ^ Floating Point mulitiplication factor
+      dspr_comt :: !String
 } deriving (Eq, Show)
 
 
 -- | Data set registration conrol (DSRC)
 data DSRC = DSRC {
-      dsrc_rpid :: Word8, -- ^ Registration point ID
-      dsrc_ryco :: Double, -- ^ Registration point Latitude or Northing
-      dsrc_rxco :: Double, -- ^ Registration point Longitude or Easting
-      dsrc_curp :: COUN, -- ^ Coordinate units for registration point
-      dsrc_fpmf :: Integer, -- ^ Floating point mulitplication factor
-      dsrc_rxvl :: Double, -- ^ Registration point X-value
-      dsrc_ryvl :: Double, -- ^ Registration point Y-value
-      dsrc_comt :: String -- ^ Comment
+      dsrc_rpid :: !Word8, -- ^ Registration point ID
+      dsrc_ryco :: !Double, -- ^ Registration point Latitude or Northing
+      dsrc_rxco :: !Double, -- ^ Registration point Longitude or Easting
+      dsrc_curp :: !COUN, -- ^ Coordinate units for registration point
+      dsrc_fpmf :: !Integer, -- ^ Floating point mulitplication factor
+      dsrc_rxvl :: !Double, -- ^ Registration point X-value
+      dsrc_ryvl :: !Double, -- ^ Registration point Y-value
+      dsrc_comt :: !String -- ^ Comment
 } deriving (Eq,Show)
 
 
@@ -190,23 +190,23 @@ data VRID = VRID {
       vrid_rcid :: !Word32, -- ^ Record identification number 
       vrid_rver :: !Integer, -- ^ Record version
       vrid_ruin :: !RUIN, -- ^ Record update instruction
-      vrid_attvs :: [ATTV], -- ^ Attribute Fields
-      vrid_vrpc :: Maybe VRPC, -- ^ Pointer Control Field
-      vrid_sg2ds :: [SG2D], -- ^ 2-D coodrinate fields
-      vrid_sg3ds :: [SG3D]  -- ^ 3-D coodrinate (Sounding Array) fields
+      vrid_attvs :: !([ATTV]), -- ^ Attribute Fields
+      vrid_vrpc :: !(Maybe VRPC), -- ^ Pointer Control Field
+      vrid_sg2ds :: !([SG2D]), -- ^ 2-D coodrinate fields
+      vrid_sg3ds :: !([SG3D])  -- ^ 3-D coodrinate (Sounding Array) fields
 } deriving (Eq, Show)
 
 -- | Vector record attribute
 data ATTV = ATTV {
       attv_attl :: !Integer, -- ^ Attribute label/code
-      attv_atvl :: String -- ^ Attribute value
+      attv_atvl :: !String -- ^ Attribute value
     } deriving (Eq, Show)
 
 -- | Vector record pointer control
 data VRPC = VRPC {
       vrpc_vpui :: !RUIN, -- ^ Vector record pointer update instruction
-      vrpc_vpix :: Integer, -- ^ Vector record pointer index
-      vrpc_nvpt :: Integer -- ^ Number of record pointers
+      vrpc_vpix :: !Integer, -- ^ Vector record pointer index
+      vrpc_nvpt :: !Integer -- ^ Number of record pointers
     } deriving (Eq, Show)
 
 -- | 2-D coodrinate fields
