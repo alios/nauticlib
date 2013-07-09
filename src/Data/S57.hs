@@ -78,8 +78,8 @@ module Data.S57 (
   PRSP (..),
   PROF (..),
   EXPP (..),
-  DSTR (..),
-  VRID_RCNM (..),
+  DataStruct (..),
+  VectorRecordIdentifier (..),
   RUIN (..),
   Orientation,
   UsageIndicator,
@@ -137,7 +137,7 @@ data DSID = DSID {
   
 -- | Data set structure information field 'DSSI'
 data DSSI = DSSI {
-      dssi_dstr :: !DSTR, -- ^ Data structure
+      dssi_dstr :: !(Maybe DataStruct), -- ^ Data structure
       dssi_aall :: !LexicalLevel, -- ^ 'ATTF' lexical level
       dssi_nall :: !LexicalLevel, -- ^ 'NATF' lecical level
       dssi_nomr :: !Integer, -- ^ Number of meta records
@@ -228,7 +228,7 @@ data DDSC = DDSC
 
 -- | Vector record
 data VRID = VRID {
-      vrid_rcnm :: !VRID_RCNM, -- ^ Record name
+      vrid_rcnm :: !VectorRecordIdentifier, -- ^ Record name
       vrid_rcid :: !Word32, -- ^ Record identification number 
       vrid_rver :: !Integer, -- ^ Record version
       vrid_ruin :: !RUIN, -- ^ Record update instruction
@@ -579,12 +579,11 @@ data EXPP
     | DataSetIsRevision
     deriving (Eq, Show)
 
-data DSTR 
+data DataStruct 
     = CartographicSpaghetti
     | ChainMode
     | PlanarGraph
     | FullTopology
-    | TopologyNotRelevant
     deriving (Eq, Show)
 
 data PRSP
@@ -604,7 +603,9 @@ data COUN
     | UnitsOnTheChartMap
     deriving (Eq, Show)
 
-data VRID_RCNM 
+-- | The vector record identifier field hold the record identifier (key) for that vector record.
+--   It is also used to diffentiate between the various types of vector records.
+data VectorRecordIdentifier 
     = IsolatedNode
     | ConnectedNode
     | Edge
@@ -618,13 +619,18 @@ data RUIN
     deriving (Eq, Show)
 
 
+-- | The direction in which an edge is to be interpreted for a particular area is indicated in the
+--   'Orientation' subfield.
 data Orientation
     = Forward 
     | Reverse 
     | OrientNULL
     deriving (Eq, Show)
 
-
+-- | The In the case of areas consisting of one outer boundary and one or more non-intersecting
+--   inner boundaries (areas with holes), the 'UsageIndicator' subfield is used to distinguish
+--   between interior and exterior boundaries. The subfield is also used to indicate that an 
+--   exterior boundary is part of the data limit.
 data UsageIndicator
     = Exterior
     | Interior
@@ -632,7 +638,7 @@ data UsageIndicator
     | UsageNULL
     deriving (Eq, Show)
 
-
+-- | Topology Indicator
 data TopologyIndicator
     = BeginningNode
     | EndNode
@@ -641,6 +647,7 @@ data TopologyIndicator
     | ContainingFace
     deriving (Show, Eq)
 
+-- | Under certain circumstances it may be necessary to suppress the symbolization of one or more edges which define the inner or outer boundary of an area. Suppression off the symbolization can be controlled by using the 'MaskingIndicator'.
 data MaskingIndicator 
     = MaskMask 
     | MaskShow
@@ -650,16 +657,6 @@ data MaskingIndicator
 --
 -- instance declarations
 --
-instance DataField DSTR where
-    fromDataField (DFInteger i) = 
-        case i of
-          1 -> CartographicSpaghetti
-          2 -> ChainMode
-          3 -> PlanarGraph
-          4 -> FullTopology
-          5 -> TopologyNotRelevant
-    fromDataField f = error $ "unable to decode DSTR from:" ++ show f
-
 
 instance DataField Word32 where
     fromDataField (DFInteger i) = fromInteger i
@@ -680,6 +677,25 @@ instance DataField EXPP where
                 error $ "invalid EXPP: " ++ show i
     fromDataField f = error $ "unable to decode ExchangePurpose from:" ++ show f
 
+instance DataField (Maybe DataStruct) where
+    fromDataField (DFString s) = 
+        if (s == "CS") then Just CartographicSpaghetti else
+            if (s == "CN") then Just ChainMode else
+                if (s == "PG") then Just PlanarGraph else
+                    if (s == "FT") then Just FullTopology else
+                        if (s == "NO") then Nothing else
+                            error $ "invalid Orientation: " ++ s
+    fromDataField (DFInteger i) = 
+        case i of
+          1 -> Just CartographicSpaghetti
+          2 -> Just ChainMode
+          3 -> Just PlanarGraph
+          4 -> Just FullTopology
+          255 -> Nothing
+    fromDataField f = error $ "unable to decode DataStruct from:" ++ show f
+
+
+
 instance DataField PRSP where
     fromDataField (DFString s) = 
         if (s == "ENC") then ElectronicNavigationalChart else
@@ -693,21 +709,21 @@ instance DataField PRSP where
     fromDataField f = error $ "unable to decode ProductSpec from:" ++ show f
 
 
-instance DataField VRID_RCNM where
+instance DataField VectorRecordIdentifier where
     fromDataField (DFString s) = 
         if (s == "VI") then IsolatedNode else
             if (s == "VC") then ConnectedNode else
                 if (s == "VE") then Edge else
                     if (s == "VF") then Face else
-                        error $ "invalid VRID_RCNM: " ++ s
+                        error $ "invalid VectorRecordIdentifier: " ++ s
     fromDataField (DFInteger i) = 
         case i of
           110 -> IsolatedNode
           120 -> ConnectedNode
           130 -> Edge
           140 -> Face
-          i -> error $ "invalid VRID_RCNM: " ++ show i
-    fromDataField f = error $ "unable to decode VRID_RCNM from:" ++ show f
+          i -> error $ "invalid VectorRecordIdentifier: " ++ show i
+    fromDataField f = error $ "unable to decode VectorRecordIdentifier from:" ++ show f
 
 instance DataField PROF where
     fromDataField (DFString s) = 
