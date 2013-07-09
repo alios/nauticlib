@@ -69,6 +69,8 @@ module Data.S57 (
   VRID (..),
   ATTV (..),
   VRPC (..),
+  VRPT (..),
+  SGCC (..),
   SG2D (..),
   SG3D (..),
   
@@ -90,7 +92,7 @@ import Data.Time.Format
 import System.Locale
 import qualified Data.Map as Map
 import Data.Word
-
+import Data.ByteString (ByteString)
 type AGEN = Integer
 
 -- | a S-57 Datafile
@@ -220,6 +222,8 @@ data VRID = VRID {
       vrid_ruin :: !RUIN, -- ^ Record update instruction
       vrid_attvs :: !([ATTV]), -- ^ Attribute Fields
       vrid_vrpc :: !(Maybe VRPC), -- ^ Pointer Control Field
+      vrid_vrpt :: !([VRPT]), -- ^ Pointer Fields
+      vrid_sgcc :: !(Maybe SGCC), -- ^ Coordinate Control Field
       vrid_sg2ds :: !([SG2D]), -- ^ 2-D coodrinate fields
       vrid_sg3ds :: !([SG3D])  -- ^ 3-D coodrinate (Sounding Array) fields
 } deriving (Eq, Show)
@@ -237,6 +241,24 @@ data VRPC = VRPC {
       vrpc_nvpt :: !Integer -- ^ Number of record pointers
     } deriving (Eq, Show)
 
+
+-- | Vector record pointer
+data VRPT = VRPT {
+      vrpt_name :: !ByteString, -- ^ Name
+      vrpt_ornt :: !(Maybe Orientation), -- ^ Orientation
+      vrpt_usag :: !(Maybe UsageIndicator), -- ^ Usage indicator
+      vrpt_topi :: !(Maybe TopologyIndicator), -- ^ Topology indicator
+      vrpt_mask :: !(Maybe MaskingIndicator)  -- ^ Masking indicator
+    } deriving (Eq, Show)
+
+
+-- | Coordinate control field
+data SGCC = SGCC {
+      sgcc_ccui :: !RUIN, -- ^ Coordinate update instruction
+      sgcc_ccix :: !Integer, -- ^ Coordinate index
+      sgcc_ccnc :: !Integer -- ^ Number of coordinates
+} deriving (Eq, Show)
+
 -- | 2-D coodrinate fields
 data SG2D = SG2D {
       sg2d_ycoo :: !Double, -- ^ Coordinat in Y axis
@@ -250,53 +272,6 @@ data SG3D = SG3D {
       sg3d_ve3d :: !Double -- ^ 3-D (sounding) value
 } deriving (Eq, Show)
 
-
---
--- data types
---
-
-data EXPP 
-    = DataSetIsNew 
-    | DataSetIsRevision
-    deriving (Eq, Show)
-
-data DSTR 
-    = CartographicSpaghetti
-    | ChainMode
-    | PlanarGraph
-    | FullTopology
-    | TopologyNotRelevant
-    deriving (Eq, Show)
-
-data PRSP
-    = ElectronicNavigationalChart 
-    | IHOObjectCatalogueDataDictionary
-    deriving (Eq, Show)
-
-data PROF 
-    = ENCNew 
-    | ENCRevision 
-    | IHODataDictionary
-    deriving (Eq, Show)
-
-data COUN
-    = LatitudeLongitude
-    | EastingNorthing
-    | UnitsOnTheChartMap
-    deriving (Eq, Show)
-
-data VRID_RCNM 
-    = IsolatedNode
-    | ConnectedNode
-    | Edge
-    | Face
-    deriving (Eq, Show)
-
-data RUIN 
-    = Insert
-    | Delete
-    | Modify
-    deriving (Eq, Show)
 
 
 --
@@ -431,6 +406,8 @@ vrid dspm' dr = VRID {
              vrid_ruin  = sdRecordField dr "RUIN",
              vrid_attvs = attvs dr,
              vrid_vrpc  = vrpc dr,
+             vrid_vrpt  = vrpts dr,
+             vrid_sgcc  = sgcc dr,
              vrid_sg2ds = sg2ds dspm' dr,
              vrid_sg3ds = sg3ds dspm' dr
            }
@@ -444,6 +421,30 @@ vrpc r =
                   vrpc_vpix = sdRecordField dr "VPIX",
                   vrpc_nvpt = sdRecordField dr "NVPT"
                 }
+
+sgcc :: DataRecord -> Maybe SGCC
+sgcc r = 
+    case (findSubRecord' "SGCC" r) of
+      Nothing -> Nothing 
+      Just dr -> Just SGCC {
+                  sgcc_ccui = sdRecordField dr "VPUI",
+                  sgcc_ccix = sdRecordField dr "VPIX",
+                  sgcc_ccnc = sdRecordField dr "NVPT"
+                }
+
+
+vrpts :: DataRecord -> [VRPT]
+vrpts = maybemdRecords "VRPT" vrpt
+
+vrpt :: Map.Map String DataFieldT -> VRPT
+vrpt m = VRPT {
+         vrpt_name = mdRecordField "NAME" m,
+         vrpt_ornt = mdRecordField "ORNT" m,
+         vrpt_usag = mdRecordField "USAG" m,
+         vrpt_topi = mdRecordField "TOPI" m,
+         vrpt_mask = mdRecordField "MASK" m
+       }
+
 
 attvs :: DataRecord -> [ATTV]
 attvs = maybemdRecords "ATTV" attv
@@ -553,6 +554,84 @@ mdRecordField t m =
 maybemdRecords ::
   String -> (Map.Map String DataFieldT -> a) -> DataRecord -> [a]
 maybemdRecords t c r = maybe [] (map c) $ mdRecords' t r
+
+
+
+--
+-- data types
+--
+
+data EXPP 
+    = DataSetIsNew 
+    | DataSetIsRevision
+    deriving (Eq, Show)
+
+data DSTR 
+    = CartographicSpaghetti
+    | ChainMode
+    | PlanarGraph
+    | FullTopology
+    | TopologyNotRelevant
+    deriving (Eq, Show)
+
+data PRSP
+    = ElectronicNavigationalChart 
+    | IHOObjectCatalogueDataDictionary
+    deriving (Eq, Show)
+
+data PROF 
+    = ENCNew 
+    | ENCRevision 
+    | IHODataDictionary
+    deriving (Eq, Show)
+
+data COUN
+    = LatitudeLongitude
+    | EastingNorthing
+    | UnitsOnTheChartMap
+    deriving (Eq, Show)
+
+data VRID_RCNM 
+    = IsolatedNode
+    | ConnectedNode
+    | Edge
+    | Face
+    deriving (Eq, Show)
+
+data RUIN 
+    = Insert
+    | Delete
+    | Modify
+    deriving (Eq, Show)
+
+
+data Orientation
+    = Forward 
+    | Reverse 
+    | OrientNULL
+    deriving (Eq, Show)
+
+
+data UsageIndicator
+    = Exterior
+    | Interior
+    | ExteriorBoundaryTruncated
+    | UsageNULL
+    deriving (Eq, Show)
+
+
+data TopologyIndicator
+    = BeginningNode
+    | EndNode
+    | LeftFace
+    | RightFace
+    | ContainingFace
+    deriving (Show, Eq)
+
+data MaskingIndicator 
+    = MaskMask 
+    | MaskShow
+    deriving (Show, Eq)
 
 
 --
@@ -677,4 +756,71 @@ instance DataField RUIN where
           1 -> Insert
           2 -> Delete
           3 -> Modify
+          i -> error $ "invalid RUIN: " ++ show i
+    fromDataField i = error $ "unable to decode RUIN from:" ++ show i
     
+
+instance DataField (Maybe Orientation) where
+    fromDataField (DFString s) = 
+        if (s == "F") then Just Forward else
+            if (s == "R") then Just Reverse else
+                if (s == "N") then Nothing else
+                    error $ "invalid Orientation: " ++ s
+    fromDataField (DFInteger i) = 
+        case i of
+          1 -> Just Forward
+          2 -> Just Reverse
+          255 -> Nothing
+          i -> error $ "invalid Orientation: " ++ show i
+    fromDataField i = error $ "unable to decode Orientation from:" ++ show i
+
+instance DataField (Maybe UsageIndicator) where
+    fromDataField (DFString s) = 
+        if (s == "E") then Just Exterior else
+            if (s == "I") then Just Interior else
+                if (s == "C") then Just ExteriorBoundaryTruncated else
+                    if (s == "N") then Nothing else
+                        error $ "invalid Usage Indicator: " ++ s
+    fromDataField (DFInteger i) = 
+        case i of
+          1 -> Just Exterior
+          2 -> Just Interior
+          3 -> Just ExteriorBoundaryTruncated
+          255 -> Nothing
+          i -> error $ "invalid Usage Indicator: " ++ show i
+    fromDataField i = error $ "unable to decode Usage Indicator from:" ++ show i
+
+
+instance DataField (Maybe TopologyIndicator) where
+    fromDataField (DFString s) = 
+        if (s == "B") then Just BeginningNode else
+            if (s == "E") then Just EndNode else
+                if (s == "S") then Just LeftFace else
+                    if (s == "D") then Just RightFace else
+                        if (s == "F") then Just ContainingFace else
+                            if (s == "N") then Nothing else
+                                error $ "invalid Topology Indicator: " ++ s
+    fromDataField (DFInteger i) = 
+        case i of
+          1 -> Just BeginningNode
+          2 -> Just EndNode
+          3 -> Just LeftFace
+          4 -> Just RightFace
+          5 -> Just ContainingFace
+          255 -> Nothing
+          i -> error $ "invalid Topology Indicator: " ++ show i
+    fromDataField i = error $ "unable to decode Topology Indicator from:" ++ show i
+
+instance DataField (Maybe MaskingIndicator) where
+    fromDataField (DFString s) = 
+        if (s == "M") then Just MaskMask else
+            if (s == "S") then Just MaskShow else
+                if (s == "N") then Nothing else
+                    error $ "invalid Masking Indicator: " ++ s
+    fromDataField (DFInteger i) = 
+        case i of
+          1 -> Just MaskMask
+          2 -> Just MaskShow
+          255 -> Nothing
+          i -> error $ "invalid Masking Indicator: " ++ show i
+    fromDataField i = error $ "unable to decode Masking Indicator from:" ++ show i
