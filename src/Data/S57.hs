@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
 
 module Data.S57 (
+  DataFileS57 (..),
+  s57dataFile,
   -- * Record types
   -- ** Data set descriptive records
   -- *** Data set general information record (DSID)
@@ -51,11 +53,17 @@ import Data.Word
 
 type AGEN = Integer
 
+-- | a S-57 Datafile
+data DataFileS57 = DataFileS57 {
+      df_dsid :: DSID,
+      df_dspm :: DSPM,
+      df_vrids :: [VRID]
+} deriving (Eq, Show)
 
 -- | Data set Identification field structure 'DSID'
 data DSID = DSID {
-      dsid_rcnm :: !Word32, -- ^ Record name
-      dsid_rcid :: !Integer, -- ^ Record identification number
+      dsid_rcnm :: !Word8, -- ^ Record name
+      dsid_rcid :: !Word32, -- ^ Record identification number
       dsid_expp :: !EXPP, -- ^ Exchange purpose
       dsid_intu :: !Integer, -- ^ Intended usage. A numeric value indicating the inteded usage for wich the data has been compiled.
       dsid_dsnm :: !String, -- ^ Data set name
@@ -91,8 +99,22 @@ data DSSI = DSSI {
 
 -- | Data set parameter field 'DSPM'
 data DSPM = DSPM {
-      dspm_rcnm :: Word32 -- ^ Record name
-}
+      dspm_rcnm :: Word8, -- ^ Record name
+      dspm_rcid :: Word32,  -- ^Record Identification number
+      dspm_hdat :: Word8, -- ^ Horizontal geodetic datum (HORDAT)
+      dspm_vdat :: Word8, -- ^ Vertical geodetic datum (VERDAT)
+      dspm_sdat :: Word8, -- ^ Sounding geodetic datum (VERDAT)
+      dspm_cscl :: Integer, -- ^ Compilation scale of data
+      dspm_duni :: Word8,  -- ^ Units of depth measurement
+      dspm_huni :: Word8, -- ^ Units of height measurement
+      dspm_puni :: Word8, -- ^ Units of postitional accuracy
+      dspm_coun :: COUN, -- ^ Coordinate Units
+      dspm_comf :: Integer, -- ^ Coordinate muliplication factor
+      dspm_somf :: Integer, -- ^ 3-D (sounding) multiplication factor
+      dspm_comt :: String
+} deriving (Eq, Show)
+
+
 
 -- | Data set projection field (DSPR)
 data DSPR = DSPR
@@ -174,6 +196,11 @@ data PROF
     | IHODataDictionary
     deriving (Eq, Show)
 
+data COUN
+    = LatitudeLongitude
+    | EastingNorthing
+    | UnitsOnTheChartMap
+    deriving (Eq, Show)
 
 data VRID_RCNM 
     = IsolatedNode
@@ -192,6 +219,12 @@ data RUIN
 --
 -- exported functions
 --
+s57dataFile :: DataFile -> DataFileS57
+s57dataFile f = DataFileS57 {
+                 df_dsid = dsid f,
+                 df_dspm = dspm f,
+                 df_vrids = vrids f
+                }
 
 -- | get the 'DSID' from a ISO-8211 'DataFile' 
 dsid :: DataFile -> DSID
@@ -235,17 +268,38 @@ dssi r =
            }
 
 
+-- | get the 'DSID' from a ISO-8211 'DataFile' 
+dspm :: DataFile -> DSPM
+dspm df = 
+ let dr = findRecordByTag "DSPM" df 
+ in DSPM {
+      dspm_rcnm = sdRecordField dr "RCNM",
+      dspm_rcid = sdRecordField dr "RCID",
+      dspm_hdat = sdRecordField dr "HDAT",
+      dspm_vdat = sdRecordField dr "VDAT",
+      dspm_sdat = sdRecordField dr "SDAT",
+      dspm_cscl = sdRecordField dr "CSCL",
+      dspm_duni = sdRecordField dr "DUNI",
+      dspm_huni = sdRecordField dr "HUNI",
+      dspm_puni = sdRecordField dr "PUNI",
+      dspm_coun = sdRecordField dr "COUN",
+      dspm_comf = sdRecordField dr "COMF",
+      dspm_somf = sdRecordField dr "SOMF",
+      dspm_comt = sdRecordField dr "COMT"
+}
+
+
 vrids :: DataFile -> [VRID]
 vrids = map vrid .  findRecordsByTag "VRID"
 
 vrid    :: DataRecord -> VRID
 vrid dr = VRID {
-             vrid_rcnm = sdRecordField dr "RCNM",
-             vrid_rcid = sdRecordField dr "RCID",
-             vrid_rver = sdRecordField dr "RVER",
-             vrid_ruin = sdRecordField dr "RUIN",
+             vrid_rcnm  = sdRecordField dr "RCNM",
+             vrid_rcid  = sdRecordField dr "RCID",
+             vrid_rver  = sdRecordField dr "RVER",
+             vrid_ruin  = sdRecordField dr "RUIN",
              vrid_attvs = attvs dr,
-             vrid_vrpc = vrpc dr,
+             vrid_vrpc  = vrpc dr,
              vrid_sg2ds = sg2ds dr,
              vrid_sg3ds = sg3ds dr
            }
@@ -259,8 +313,6 @@ vrpc r =
                   vrpc_vpix = sdRecordField dr "VPIX",
                   vrpc_nvpt = sdRecordField dr "NVPT"
                 }
-
-   
 
 attvs :: DataRecord -> [ATTV]
 attvs = maybemdRecords "ATTV" attv
@@ -378,6 +430,10 @@ instance DataField Word32 where
     fromDataField (DFInteger i) = fromInteger i
     fromDataField v = error $ "invalid word32 " ++ show v
 
+instance DataField Word8 where
+    fromDataField (DFInteger i) = fromInteger i
+    fromDataField v = error $ "invalid word8 " ++ show v
+
 instance DataField EXPP where
     fromDataField (DFString s) = 
         if (s == "N") then DataSetIsNew else
@@ -431,6 +487,21 @@ instance DataField PROF where
           3 -> IHODataDictionary
           i -> error $ "invalid PROF: " ++ show i
     fromDataField f = error $ "unable to decode PROF from:" ++ show f
+
+
+instance DataField COUN where
+    fromDataField (DFString s) = 
+        if (s == "LL") then LatitudeLongitude else
+            if (s == "EN") then EastingNorthing else
+                if (s == "UC") then UnitsOnTheChartMap else
+                    error $ "invalid PROF: " ++ s
+    fromDataField (DFInteger i) = 
+        case i of
+          1 -> LatitudeLongitude
+          2 -> EastingNorthing
+          3 -> UnitsOnTheChartMap
+          i -> error $ "invalid COUN: " ++ show i
+    fromDataField f = error $ "unable to decode COUN from:" ++ show f
 
 
 instance DataField (Maybe Day) where

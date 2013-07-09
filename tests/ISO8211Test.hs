@@ -18,7 +18,7 @@ main = do
  case r of
    Left err -> print err
    Right f@(ddr, rs) -> do
-          putStr . ppShow $ vrids f
+          putStr . ppShow . df_dspm . s57dataFile $ f
           print ""
 {-          print $ dsid_uadt f
           print $ dsid_prsp f
