@@ -111,6 +111,7 @@ type AGEN = Integer
 data DataFileS57 = DataFileS57 {
       df_dsid :: !(Maybe DSID),
       df_dspm :: !(Maybe DSPM),
+      df_catd :: !([CATD]),
       df_vrids :: !([VRID])
 } deriving (Eq, Show)
 
@@ -206,23 +207,59 @@ data DSAC = DSAC
 
 
 -- | Catalogue directory record (CATD)
-data CATD = CATD
+data CATD = CATD {
+      catd_rcnm :: !String, -- ^  
+      catd_rcid :: !Integer, -- ^  
+      catd_file :: !String, -- ^  
+      catd_lfil :: !String, -- ^  
+      catd_volm :: !String, -- ^  
+      catd_impl :: !String, -- ^  
+      catd_slat :: !Double, -- ^  
+      catd_wlon :: !Double, -- ^  
+      catd_nlat :: !Double, -- ^  
+      catd_elon :: !Double, -- ^  
+      catd_crcs :: !String, -- ^  
+      catd_comt :: !String, -- ^  
+      catd_catxs :: [CATX]
+} deriving (Eq, Show)
+
 -- | Catalogue cross refernce record (CATX)
-data CATX = CATX
+data CATX = CATX  {
+      catx_rcnm :: !String, -- ^  
+      catx_rcid :: !Integer, -- ^  
+      catx_nam1 :: !Name, -- ^  
+      catx_nam2 :: !Name, -- ^  
+      catx_comt :: !String -- ^  
+} deriving (Eq, Show)
 
-data DDDF = DDDF
 
-data DDDR = DDDR
+data DDDF = DDDF {
+} deriving (Eq, Show)
 
-data DDDI = DDDI
 
-data DDOM = DDOM
+data DDDR = DDDR {
+} deriving (Eq, Show)
 
-data DDRF = DDRF
+
+data DDDI = DDDI {
+} deriving (Eq, Show)
+
+
+data DDOM = DDOM {
+} deriving (Eq, Show)
+
+
+data DDRF = DDRF {
+} deriving (Eq, Show)
+
 
 data DDSI = DDSI
+ {
+} deriving (Eq, Show)
 
 data DDSC = DDSC
+ {
+} deriving (Eq, Show)
 
 
 
@@ -299,6 +336,7 @@ s57dataFile f =
               Just dspm'' -> vrids dspm'' f
     in DataFileS57 {
              df_dsid = dsid f,
+             df_catd = catds f,
              df_dspm = dspm',
              df_vrids = vrids'
            }
@@ -408,6 +446,42 @@ dsrc dr =
             dsrc_comt = sdRecordField dr "COMT"
           }
 
+
+catds :: DataFile -> [CATD]
+catds df = 
+    let rs = findRecordsByTag "CATD" df
+        catd dr = CATD {
+               catd_rcnm = sdRecordField dr "RCNM",
+               catd_rcid = sdRecordField dr "RCID",
+               catd_file = sdRecordField dr "FILE",
+               catd_lfil = sdRecordField dr "LFIL",
+               catd_volm = sdRecordField dr "VOLM", 
+               catd_impl = sdRecordField dr "IMPL", 
+               catd_slat = sdRecordField dr "SLAT",
+               catd_wlon = sdRecordField dr "WLON", 
+               catd_nlat = sdRecordField dr "NLAT", 
+               catd_elon = sdRecordField dr "ELON",
+               catd_crcs = sdRecordField dr "CRCS", 
+               catd_comt = sdRecordField dr "COMT",
+               catd_catxs = catxs dr
+             }
+    in map catd rs
+
+
+catxs = maybemdRecords "CATX" catx
+catxs :: DataRecord -> [CATX]
+
+catx :: Map.Map String DataFieldT -> CATX
+catx m = CATX {
+         catx_rcnm = mdRecordField "RCNM" m,
+         catx_rcid = mdRecordField "RCID" m,
+         catx_nam1 = mdRecordField "NAM1" m,
+         catx_nam2 = mdRecordField "NAM2" m,
+         catx_comt = mdRecordField "COMT" m
+       }
+
+
+
 vrids :: DSPM -> DataFile -> [VRID]
 vrids dspm' df = map (vrid dspm') $ findRecordsByTag "VRID" df
 
@@ -457,7 +531,6 @@ vrpt m = VRPT {
          vrpt_topi = mdRecordField "TOPI" m,
          vrpt_mask = mdRecordField "MASK" m
        }
-
 
 attvs :: DataRecord -> [ATTV]
 attvs = maybemdRecords "ATTV" attv
