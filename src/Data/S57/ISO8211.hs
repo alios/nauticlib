@@ -169,7 +169,6 @@ dsMultiDimStruct t = error $ "not a Multi Dim Structure: " ++ show t
 parseDataFile :: Parser DataFile
 parseDataFile = do
   ddr <- parseDDR <?> "data descriptive record"
-
   drs <- manyTill (parseDR ddr) (try endOfInput) <?> "data record"
   return (ddr, drs)
 
@@ -195,6 +194,7 @@ parseDDR' = do
 
 parseDR :: DataDescriptiveRecord -> Parser DataRecord
 parseDR ddr = fmap snd (parseDR' ddr)
+
 
 parseDR' :: DataDescriptiveRecord -> Parser ((Char, Char, Char, Char, Char, String), DataRecord)
 parseDR' ddr = do
@@ -254,10 +254,14 @@ dataFormatToParser esc (CharacterData l) = fmap DFString $
       Just i ->  count (fromInteger i) C8.anyChar
 dataFormatToParser esc (ImplicitPoint l) = do
     (DFString s) <- dataFormatToParser esc (CharacterData l)
-    return $ DFInteger (read s)
+    return $ if (length s == 0) 
+             then DFInteger 0
+             else DFInteger (read s)
 dataFormatToParser esc (ExplicitPoint l) = do
     (DFString s) <- dataFormatToParser esc (CharacterData l)
-    return $ DFReal (read s)
+    return $ if (length s == 0) 
+             then DFReal 0.0
+             else DFReal (read s)
 dataFormatToParser _ (BitString l) = fmap DFByteString $
     case l of 
       Nothing -> fmap BS.pack $ anyWord8 `manyTill` (try $ parseUT)
@@ -376,13 +380,19 @@ parseLeader = do
   ext <- C8.anyChar   <?> "In line code extension indicator"
   ver <- C8.anyChar   <?> "version number"
   appi <- C8.anyChar  <?> "application indicator"
-  fcl <- parseInt 2 <?> "field control length"
+  fcl <- parseFCL <?> "field control length"
   baseAddr <- parseInt 5 <?> "field control length"
   extCharSet <- count 3 C8.anyChar <?> "Extended character set indicator"
                
   let fieldAreaLen = len - baseAddr
   return (ichglvl, lid, ext, ver, appi, fcl, extCharSet, fieldAreaLen)
 
+parseFCL :: Parser Int
+parseFCL = choice [
+            try $ parseInt 2,
+            do _ <- count 2 $ C8.char ' '
+               return 0
+           ]
 
 parseEntryMap :: Parser (Int, [(String, Int, Int)])
 parseEntryMap = do
