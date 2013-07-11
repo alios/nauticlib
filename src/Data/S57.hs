@@ -42,6 +42,8 @@ import Data.S57.RecordTypes
 data DataFileS57 = DataFileS57 {
       df_dsid :: !(Maybe DSID),
       df_dspm :: !(Maybe DSPM),
+      df_dsht :: !(Maybe DSHT),
+      df_dsac :: !(Maybe DSAC),
       df_catd :: !([CATD]),
       df_frids :: !([FRID]),
       df_vrids :: !([VRID])
@@ -62,6 +64,8 @@ s57dataFile f =
              df_dsid = dsid f,
              df_catd = catds f,
              df_dspm = dspm',
+             df_dsht = dsht f,
+             df_dsac = dsac f,
              df_frids = frids f,
              df_vrids = vrids'
            }
@@ -90,6 +94,7 @@ dsid df =
           dsid_comt = sdRecordField dr "COMT",
           dsid_dssi = dssi dr
         }
+
     
 dssi :: ISO8211.DataRecord -> DSSI
 dssi r =  
@@ -170,6 +175,37 @@ dsrc dr =
             dsrc_ryvl = sdRecordField dr "RYVL", 
             dsrc_comt = sdRecordField dr "COMT"
           }
+
+dsht df =
+ case (findRecord' "DSHT" df) of
+   Nothing -> Nothing
+   Just dr -> 
+       Just DSHT {
+                  dsht_rcnm = sdRecordField dr "RCNM",
+                  dsht_rcid = sdRecordField dr "RCID", 
+                  dsht_prco = sdRecordField dr "PRCO", 
+                  dsht_esdt = sdRecordField dr "ESDT",
+                  dsht_lsdt = sdRecordField dr "LSDT", 
+                  dsht_dcrt = sdRecordField dr "DCRT",
+                  dsht_codt = sdRecordField dr "CODT",
+                  dsht_comt = sdRecordField dr "COMT"
+                }    
+
+
+dsac df =
+ case (findRecord' "DSAC" df) of
+   Nothing -> Nothing
+   Just dr -> 
+       let fpmr = fromInteger $ sdRecordField dr "FPMR"
+       in Just DSAC {
+                dsac_rcnm = sdRecordField dr "RCNM",
+                dsac_rcid = sdRecordField dr "RCID",
+                dsac_pacc = (fromInteger $ sdRecordField dr "PACC") / fromInteger fpmr,
+                dsac_hacc = (fromInteger $ sdRecordField dr "HACC") / fromInteger fpmr, 
+                dsac_sacc = (fromInteger $ sdRecordField dr "SACC") / fromInteger fpmr, 
+                dsac_fpmf = fpmr,
+                dsac_comt = sdRecordField dr "RCID"
+              }
 
 
 catds :: ISO8211.DataFile -> [CATD]

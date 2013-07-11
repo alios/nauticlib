@@ -186,11 +186,27 @@ data DSRC = DSRC {
 
 
 -- | Data set history recrord (DSHT)
-data DSHT = DSHT
+data DSHT = DSHT {
+      dsht_rcnm :: !String, -- ^ Record name
+      dsht_rcid :: !Integer, -- ^ Record identification number
+      dsht_prco :: !Integer, -- ^ Agency Code
+      dsht_esdt :: !(Maybe Day), -- ^ Earliest source date
+      dsht_lsdt :: !(Maybe Day), -- ^ Latest source date
+      dsht_dcrt :: !String, -- ^ Data collection criteria
+      dsht_codt :: !(Maybe Day), -- ^ Compilation Date
+      dsht_comt :: !String -- ^ Comment
+    } deriving (Eq, Show)
 
 -- | Data set accuracy record (DSAC)
-data DSAC = DSAC
-
+data DSAC = DSAC {
+      dsac_rcnm :: !String, -- ^ Record name
+      dsac_rcid :: !Integer, -- ^ Record identification number
+      dsac_pacc :: !Double, -- ^ Absolute positional accuracy
+      dsac_hacc :: !Double, -- ^ Absolute horizontal/vertical measurement accuracy
+      dsac_sacc :: !Double, -- ^ Absolute sounding accuracy
+      dsac_fpmf :: !Integer, -- ^ Floating point multiplication factor
+      dsac_comt :: !String -- ^ Comment
+    } deriving (Eq, Show)
 
 -- | Catalogue directory record (CATD)
 data CATD = CATD {
