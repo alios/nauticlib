@@ -64,6 +64,9 @@ module Data.S57 (
   DDSC (..),
 
   -- ** Feature records
+  -- *** Feature record (FRID)
+  FRID (..),
+
   -- ** Spatial records
   -- *** Vector record (VRID)
   VRID (..),
@@ -104,14 +107,12 @@ import Data.Binary.Get
 
 
 
-
-type AGEN = Integer
-
 -- | a S-57 Datafile
 data DataFileS57 = DataFileS57 {
       df_dsid :: !(Maybe DSID),
       df_dspm :: !(Maybe DSPM),
       df_catd :: !([CATD]),
+      df_frids :: !([FRID]),
       df_vrids :: !([VRID])
 } deriving (Eq, Show)
 
@@ -131,7 +132,7 @@ data DSID = DSID {
       dsid_psdn :: !String, -- ^ Product specification description. A string identifying a non standard product specification
       dsid_pred :: !String, -- ^ Product specification edition number
       dsid_prof :: !PROF, -- ^ Application profile identification
-      dsid_agen :: !AGEN, -- ^ Producing agency
+      dsid_agen :: !Integer, -- ^ Producing agency
       dsid_comt :: !String, -- ^ Comment
       dsid_dssi :: !DSSI -- ^ Data set structure information field
     } deriving (Eq, Show)
@@ -181,7 +182,7 @@ data DSPR = DSPR {
       dspr_feas :: !Double,  -- ^ False Easting
       dspr_fnor :: !Double, -- ^ False Northing
       dspr_fpmf :: !Integer, -- ^ Floating Point mulitiplication factor
-      dspr_comt :: !String
+      dspr_comt :: !String -- ^ Comment
 } deriving (Eq, Show)
 
 
@@ -208,28 +209,28 @@ data DSAC = DSAC
 
 -- | Catalogue directory record (CATD)
 data CATD = CATD {
-      catd_rcnm :: !String, -- ^  
-      catd_rcid :: !Integer, -- ^  
-      catd_file :: !String, -- ^  
-      catd_lfil :: !String, -- ^  
-      catd_volm :: !String, -- ^  
-      catd_impl :: !String, -- ^  
-      catd_slat :: !Double, -- ^  
-      catd_wlon :: !Double, -- ^  
-      catd_nlat :: !Double, -- ^  
-      catd_elon :: !Double, -- ^  
-      catd_crcs :: !String, -- ^  
-      catd_comt :: !String, -- ^  
+      catd_rcnm :: !String, -- ^  Record name
+      catd_rcid :: !Integer, -- ^ Record identification number
+      catd_file :: !String, -- ^  File name
+      catd_lfil :: !String, -- ^  File long name
+      catd_volm :: !String, -- ^  Volume
+      catd_impl :: !String, -- ^  Implementation
+      catd_slat :: !Double, -- ^  Souternmost Latitude
+      catd_wlon :: !Double, -- ^  Westernmost Longitude
+      catd_nlat :: !Double, -- ^  Nothermost Latitude
+      catd_elon :: !Double, -- ^  Easternmost Longitude
+      catd_crcs :: !String, -- ^  CRC
+      catd_comt :: !String, -- ^  Comment
       catd_catxs :: [CATX]
 } deriving (Eq, Show)
 
 -- | Catalogue cross refernce record (CATX)
 data CATX = CATX  {
-      catx_rcnm :: !String, -- ^  
-      catx_rcid :: !Integer, -- ^  
-      catx_nam1 :: !Name, -- ^  
-      catx_nam2 :: !Name, -- ^  
-      catx_comt :: !String -- ^  
+      catx_rcnm :: !String, -- ^ Record name
+      catx_rcid :: !Integer, -- ^ Record identification Number
+      catx_nam1 :: !Name, -- ^ Name 1
+      catx_nam2 :: !Name, -- ^ Name 2
+      catx_comt :: !String -- ^ Comment
 } deriving (Eq, Show)
 
 
@@ -261,6 +262,17 @@ data DDSC = DDSC
  {
 } deriving (Eq, Show)
 
+
+-- | Featrure record
+data FRID = FRID {
+      frid_rcnm :: !Integer, -- ^ Record name
+      frid_rcid :: !Integer, -- ^ Record identification number
+      frid_prim :: !(Maybe GeoPrimitive), -- ^ Object geometric primitive
+      frid_grup :: !Integer, -- ^ Group
+      frid_objl :: !Integer, -- ^ Object Label/Code
+      frid_rver :: !Integer, -- ^ Record version
+      frid_ruin :: !RUIN -- ^ Record update instruction
+} deriving (Eq, Show)
 
 
 -- | Vector record
@@ -338,6 +350,7 @@ s57dataFile f =
              df_dsid = dsid f,
              df_catd = catds f,
              df_dspm = dspm',
+             df_frids = frids f,
              df_vrids = vrids'
            }
 
@@ -480,6 +493,20 @@ catx m = CATX {
          catx_comt = mdRecordField "COMT" m
        }
 
+
+frids :: DataFile -> [FRID]
+frids df = map frid $ findRecordsByTag "FRID" df
+
+frid :: DataRecord -> FRID
+frid dr = FRID {
+       frid_rcnm = sdRecordField dr "RCNM",
+       frid_rcid = sdRecordField dr "RCID", 
+       frid_prim = sdRecordField dr "PRIM", 
+       frid_grup = sdRecordField dr "GRUP",
+       frid_objl = sdRecordField dr "OBJL", 
+       frid_rver = sdRecordField dr "RVER", 
+       frid_ruin = sdRecordField dr "RUIN"
+          }
 
 
 vrids :: DSPM -> DataFile -> [VRID]
@@ -726,6 +753,11 @@ data MaskingIndicator
     | MaskShow
     deriving (Show, Eq)
 
+data GeoPrimitive
+    = Point
+    | Line
+    | Area
+    deriving (Eq, Show)
 
 --
 -- instance declarations
@@ -749,6 +781,21 @@ instance DataField EXPP where
             if (i == 2) then DataSetIsRevision else
                 error $ "invalid EXPP: " ++ show i
     fromDataField f = error $ "unable to decode ExchangePurpose from:" ++ show f
+
+instance DataField (Maybe GeoPrimitive) where
+    fromDataField (DFString s) = 
+        if (s == "P") then Just Point else
+            if (s == "L") then Just Line else
+                if (s == "A") then Just Area else
+                    if (s == "N") then Nothing else
+                        error $ "invalid GeoPrimitive: " ++ s
+    fromDataField (DFInteger i) = 
+        case i of
+          1 -> Just Point
+          2 -> Just Line
+          3 -> Just Area
+          255 -> Nothing
+    fromDataField f = error $ "unable to decode DataStruct from:" ++ show f
 
 instance DataField (Maybe DataStruct) where
     fromDataField (DFString s) = 
