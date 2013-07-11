@@ -43,7 +43,7 @@ cabal-version:       >=1.8
 
 
 library
-  ghc-options:	       -Wall
+  ghc-options:	       -Wall -threaded
   hs-source-dirs:      src  
   
   -- Modules exported by the library.
@@ -69,6 +69,7 @@ test-suite ISO8211Test
   type:			exitcode-stdio-1.0
   hs-source-dirs:	tests
   main-is:		ISO8211Test.hs
+  ghc-options:		-Wall -threaded
   build-depends:	base,
                         bytestring, 
                         attoparsec,
