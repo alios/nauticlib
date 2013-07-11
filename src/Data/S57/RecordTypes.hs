@@ -462,6 +462,7 @@ instance DataField (Maybe GeoPrimitive) where
           2 -> Just Line
           3 -> Just Area
           255 -> Nothing
+          j -> error $ "invalid GeoPrimitive: " ++ show j
     fromDataField f = error $ "unable to decode DataStruct from:" ++ show f
 
 instance DataField (Maybe DataStruct) where
@@ -479,6 +480,7 @@ instance DataField (Maybe DataStruct) where
           3 -> Just PlanarGraph
           4 -> Just FullTopology
           255 -> Nothing
+          j -> error $ "invalid DataStruct: " ++ show j
     fromDataField f = error $ "unable to decode DataStruct from:" ++ show f
 
 
@@ -492,7 +494,7 @@ instance DataField PRSP where
         case i of
           1 -> ElectronicNavigationalChart
           2 -> IHOObjectCatalogueDataDictionary
-          i -> error $ "invalid ProductSpec: " ++ show i
+          j -> error $ "invalid ProductSpec: " ++ show j
     fromDataField f = error $ "unable to decode ProductSpec from:" ++ show f
 
 
@@ -509,7 +511,7 @@ instance DataField VectorRecordIdentifier where
           120 -> ConnectedNode
           130 -> Edge
           140 -> Face
-          i -> error $ "invalid VectorRecordIdentifier: " ++ show i
+          j -> error $ "invalid VectorRecordIdentifier: " ++ show j
     fromDataField f = error $ "unable to decode VectorRecordIdentifier from:" ++ show f
 
 instance DataField PROF where
@@ -523,7 +525,7 @@ instance DataField PROF where
           1 -> ENCNew
           2 -> ENCRevision
           3 -> IHODataDictionary
-          i -> error $ "invalid PROF: " ++ show i
+          j -> error $ "invalid PROF: " ++ show j
     fromDataField f = error $ "unable to decode PROF from:" ++ show f
 
 
@@ -538,7 +540,7 @@ instance DataField COUN where
           1 -> LatitudeLongitude
           2 -> EastingNorthing
           3 -> UnitsOnTheChartMap
-          i -> error $ "invalid COUN: " ++ show i
+          j -> error $ "invalid COUN: " ++ show j
     fromDataField f = error $ "unable to decode COUN from:" ++ show f
 
 
@@ -558,7 +560,7 @@ instance DataField LexicalLevel where
           0 -> LexicalLevel0
           1 -> LexicalLevel1
           2 -> LexicalLevel2
-          i -> error $ "invalid LexicalLevel: " ++ show i
+          j -> error $ "invalid LexicalLevel: " ++ show j
     fromDataField i = error $ "unable to decode lexical level from:" ++ show i
                       
 instance DataField RUIN where
@@ -572,7 +574,7 @@ instance DataField RUIN where
           1 -> Insert
           2 -> Delete
           3 -> Modify
-          i -> error $ "invalid RUIN: " ++ show i
+          j -> error $ "invalid RUIN: " ++ show j
     fromDataField i = error $ "unable to decode RUIN from:" ++ show i
     
 
@@ -587,7 +589,7 @@ instance DataField (Maybe Orientation) where
           1 -> Just Forward
           2 -> Just Reverse
           255 -> Nothing
-          i -> error $ "invalid Orientation: " ++ show i
+          j -> error $ "invalid Orientation: " ++ show j
     fromDataField i = error $ "unable to decode Orientation from:" ++ show i
 
 instance DataField (Maybe UsageIndicator) where
@@ -603,7 +605,7 @@ instance DataField (Maybe UsageIndicator) where
           2 -> Just Interior
           3 -> Just ExteriorBoundaryTruncated
           255 -> Nothing
-          i -> error $ "invalid Usage Indicator: " ++ show i
+          j -> error $ "invalid Usage Indicator: " ++ show j
     fromDataField i = error $ "unable to decode Usage Indicator from:" ++ show i
 
 
@@ -624,14 +626,14 @@ instance DataField (Maybe TopologyIndicator) where
           4 -> Just RightFace
           5 -> Just ContainingFace
           255 -> Nothing
-          i -> error $ "invalid Topology Indicator: " ++ show i
+          j -> error $ "invalid Topology Indicator: " ++ show j
     fromDataField i = error $ "unable to decode Topology Indicator from:" ++ show i
 
 instance DataField Name where
     fromDataField (DFByteString bs) = 
         let (a,b) = BS.splitAt 1 bs        
         in (BS.head a, runGet getWord32le $ BL.fromChunks [b])
-
+    fromDataField i = error $ "unable to decode Name Field from: " ++ show i
 instance DataField (Maybe MaskingIndicator) where
     fromDataField (DFString s) = 
         if (s == "M") then Just MaskMask else
@@ -643,7 +645,7 @@ instance DataField (Maybe MaskingIndicator) where
           1 -> Just MaskMask
           2 -> Just MaskShow
           255 -> Nothing
-          i -> error $ "invalid Masking Indicator: " ++ show i
+          j -> error $ "invalid Masking Indicator: " ++ show j
     fromDataField i = error $ "unable to decode Masking Indicator from:" ++ show i
 
 

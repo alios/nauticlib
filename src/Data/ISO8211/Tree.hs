@@ -38,6 +38,7 @@ module Data.ISO8211.Tree
     , findSubRecords
     , sdRecordField
     , mdRecordField
+    , mdRecords
     , maybemdRecords ) where 
 
 

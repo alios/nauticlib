@@ -176,6 +176,7 @@ dsrc dr =
             dsrc_comt = sdRecordField dr "COMT"
           }
 
+dsht :: ISO8211.DataFile -> Maybe DSHT
 dsht df =
  case (findRecord' "DSHT" df) of
    Nothing -> Nothing
@@ -191,7 +192,7 @@ dsht df =
                   dsht_comt = sdRecordField dr "COMT"
                 }    
 
-
+dsac :: ISO8211.DataFile -> Maybe DSAC
 dsac df =
  case (findRecord' "DSAC" df) of
    Nothing -> Nothing

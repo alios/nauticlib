@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
 module Data.ISO8211.Parser (DataFile
-               ,DataDescriptiveRecord
+               ,DataDescriptiveRecord(..)
                ,DataRecord
                ,DataDescriptiveField
                ,DataStructureCode (..)
@@ -48,7 +48,6 @@ import Data.ByteString (ByteString)
 import Data.Binary
 import Data.Binary.Get
 import Data.Bits
-import Data.Int
 import Data.Tree
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
@@ -176,15 +175,15 @@ parseDDR = fmap snd parseDDR'
 parseDDR' :: Parser ((Char, Char, Char, Char, Char, String), DataDescriptiveRecord)
 parseDDR' = do
   (ichglvl, lid, ext, ver, appi, fcl, extCharSet, fieldAreaLen) <- parseLeader
-  (sFieldTagF, ds) <- parseEntryMap
+  (shieldTagF, ds) <- parseEntryMap
   bs <- P.take fieldAreaLen
 
   let ((_, rr):rs) = [(t, BS.take l $ BS.drop p bs) | (t,p,l) <- ds] 
   let (_,_,_,fname, fstruct) = 
-          either error id $ parseOnly  (parseFieldControlField fcl sFieldTagF) rr
+          either error id $ parseOnly  (parseFieldControlField fcl shieldTagF) rr
   
   let rs'= [(a, either error id $ parseOnly 
-             (parseDataDescriptiveField fcl sFieldTagF) b) | (a,b) <- rs]
+             (parseDataDescriptiveField fcl) b) | (a,b) <- rs]
 
   let ddr =  DDR fname fstruct $ Map.fromList rs'
   let retval = ((ichglvl, lid, ext, ver, appi, extCharSet), ddr)
@@ -196,7 +195,7 @@ parseDR ddr = fmap snd (parseDR' ddr)
 
 parseDR' :: DataDescriptiveRecord -> Parser ((Char, Char, Char, Char, Char, String), DataRecord)
 parseDR' ddr = do
-  (ichglvl, lid, ext, ver, appi, fcl, extCharSet, fieldAreaLen) <- parseLeader
+  (ichglvl, lid, ext, ver, appi, _, extCharSet, fieldAreaLen) <- parseLeader
   (_, ds) <- parseEntryMap
   bs <- P.take fieldAreaLen
   let bss = [ (t, BS.take l $ BS.drop p bs) | (t,p,l) <- ds] 
@@ -246,7 +245,7 @@ dfsParser dfs esc sc =
 
 
 dataFormatToParser :: LexicalLevel -> DataFormat  -> Parser DataFieldT
-dataFormatToParser esc (CharacterData l) = fmap DFString $
+dataFormatToParser _ (CharacterData l) = fmap DFString $
     case l of
       Nothing -> C8.anyChar `manyTill` (try $ parseUT)
       Just i ->  count (fromInteger i) C8.anyChar
@@ -270,21 +269,29 @@ dataFormatToParser _ (UnsignedInt l) = do
     1 -> return $ DFInteger $ toInteger $ parseUInt8  (BL.fromChunks [bs])
     2 -> return $ DFInteger $ toInteger $ parseUInt16 (BL.fromChunks [bs])
     4 -> return $ DFInteger $ toInteger$ parseUInt32 (BL.fromChunks [bs])
+    i -> error $ "invalid int length: " ++ show i
 dataFormatToParser _ (SignedInt l) = do
   bs <- P.take (fromInteger l)
   case l of
     1 -> return $ DFInteger $ toInteger $ parseInt8  (BL.fromChunks [bs])
     2 -> return $ DFInteger $ toInteger $ parseInt16 (BL.fromChunks [bs])
     4 -> return $ DFInteger $ toInteger $ parseInt32 (BL.fromChunks [bs])
+    i -> error $ "invalid int length: " ++ show i
+dataFormatToParser _ (SubFieldLabel _) = error $ "@ subfield label not implemented"
 
 
+parseUInt8' :: BL.ByteString -> Word8
 parseUInt8' = runGet getWord8
+parseUInt16' :: BL.ByteString -> Word16
+parseUInt16' = runGet getWord16le
+parseUInt32' :: BL.ByteString -> Word32
+parseUInt32' = runGet getWord32le
+
+parseInt8,parseUInt8, parseInt16,parseUInt16,parseInt32,parseUInt32 :: BL.ByteString -> Integer
 parseUInt8 = toInteger . parseUInt8'
 parseInt8 = sintParser . parseUInt8'
-parseUInt16' = runGet getWord16le
 parseUInt16 = toInteger . parseUInt16'
 parseInt16 = sintParser . parseUInt16'
-parseUInt32' = runGet getWord32le
 parseUInt32 = toInteger . parseUInt32'
 parseInt32 = sintParser . parseUInt32'
 
@@ -299,13 +306,7 @@ drsToTree' :: DataDescriptiveRecord -> [DataFieldR] -> Tree DataFieldR
 drsToTree' ddr dfs  =
     let cs' k = ddrLookupChildFields ddr k
         cs k = filter (\(k',_) -> k' `elem` (cs' k)) dfs
-    in head $ unfoldForest (\b@(k,v) -> (b, cs k)) dfs
-
-
-ddrLookupParentField :: DataDescriptiveRecord -> String -> Maybe String
-ddrLookupParentField ddr fn = findParent (ddrFieldStructure ddr) fn
-    where findParent [] _ = Nothing
-          findParent ((b,c):bs) a = if a == c then Just b else findParent bs a
+    in head $ unfoldForest (\b@(k,_) -> (b, cs k)) dfs
 
 ddrLookupChildFields :: DataDescriptiveRecord -> String -> [String]
 ddrLookupChildFields ddr fn = findChildren [] fn (ddrFieldStructure ddr)
@@ -349,6 +350,7 @@ parseDataFormat' =
                  case t of
                    '1' -> return $ UnsignedInt l
                    '2' -> return $ SignedInt l
+                   i -> error $ "must be 1 (unsigned) or 2 (signed) not: " ++ show i
             ]
     in choice $ map try parsers
 
@@ -437,7 +439,7 @@ parseFieldControlField fcl sFieldTagF = do
   fieldCtrlBS <- P.take fcl
   case (parseOnly parseDDFCtrl fieldCtrlBS) of
     Left err -> fail err
-    Right (SingleDataItem, CharacterString, f,u,esc) -> 
+    Right (SingleDataItem, CharacterString, _ ,_,esc) -> 
         do name <-  manyTill C8.anyChar (try $ parseUT) <?> "name" 
            fieldTags <- manyTill (parseTagPair sFieldTagF) (try $ parseRT)
            return (toEnum 0, toEnum 0,esc,name, fieldTags) 
@@ -461,12 +463,12 @@ parseDataDescr MultiDimStructure = do
 
 
 parseDataDescriptiveField ::
-  Int -> t -> Parser DataDescriptiveField
-parseDataDescriptiveField fcl sFieldTagF = do
+  Int -> Parser DataDescriptiveField
+parseDataDescriptiveField fcl = do
   fieldCtrlBS <- P.take fcl
   case (parseOnly parseDDFCtrl fieldCtrlBS) of
     Left err -> fail err
-    Right (s,t,f,u,esc) -> 
+    Right (s,t,_,_,esc) -> 
         do name <-  manyTill C8.anyChar (try $ parseUT) <?> "name" 
            label <- (do (_,ls) <- parseDataDescr s; return ls) <?> "label"
            format <- (do fs <- parseDataFormats; parseRT; return fs) <?> "format"
