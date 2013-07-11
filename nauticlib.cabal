@@ -48,7 +48,8 @@ library
   
   -- Modules exported by the library.
   exposed-modules:      Data.S57,
-                        Data.S57.ISO8211
+                        Data.S57.ISO8211,
+                        Data.S57.RecordTypes
 
   -- Modules included in this library but not exported.
   --other-modules:       Digimil.Util
