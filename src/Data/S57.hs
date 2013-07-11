@@ -32,7 +32,8 @@ module Data.S57 (
   s57dataFile
 ) where
 
-import Data.ISO8211
+import qualified Data.ISO8211 as ISO8211
+import Data.ISO8211.Tree
 import qualified Data.Map as Map
 
 import Data.S57.RecordTypes
@@ -50,7 +51,7 @@ data DataFileS57 = DataFileS57 {
 --
 -- exported functions
 --
-s57dataFile :: DataFile -> DataFileS57
+s57dataFile :: ISO8211.DataFile -> DataFileS57
 s57dataFile f =
     let dspm' = dspm f
         vrids' =
@@ -66,7 +67,7 @@ s57dataFile f =
            }
 
 -- | get the 'DSID' from a ISO-8211 'DataFile' 
-dsid :: DataFile -> Maybe DSID
+dsid :: ISO8211.DataFile -> Maybe DSID
 dsid df = 
  case (findRecord' "DSID" df) of
    Nothing -> Nothing
@@ -90,7 +91,7 @@ dsid df =
           dsid_dssi = dssi dr
         }
     
-dssi :: DataRecord -> DSSI
+dssi :: ISO8211.DataRecord -> DSSI
 dssi r =  
     let dr = findSubRecord "DSSI" r
     in DSSI {
@@ -107,7 +108,7 @@ dssi r =
                   dssi_nofa = sdRecordField dr "NOFA"
            }
 
-dspm :: DataFile -> Maybe DSPM
+dspm :: ISO8211.DataFile -> Maybe DSPM
 dspm df = 
  case (findRecord' "DSPM" df) of
    Nothing -> Nothing
@@ -132,7 +133,7 @@ dspm df =
 
 
 
-dspr :: DataRecord -> Maybe DSPR
+dspr :: ISO8211.DataRecord -> Maybe DSPR
 dspr r = case (findSubRecord' "DSPR" r) of
            Nothing -> Nothing
            Just dr -> Just DSPR {
@@ -149,10 +150,10 @@ dspr r = case (findSubRecord' "DSPR" r) of
 
 
 
-dsrcs :: DataRecord -> [DSRC]
+dsrcs :: ISO8211.DataRecord -> [DSRC]
 dsrcs = map dsrc . findSubRecords "DSRC"
 
-dsrc :: DataRecord -> DSRC
+dsrc :: ISO8211.DataRecord -> DSRC
 dsrc dr = 
     let fpmf,ryco,rxco :: Integer
         fpmf = sdRecordField dr "FPMF"
@@ -171,7 +172,7 @@ dsrc dr =
           }
 
 
-catds :: DataFile -> [CATD]
+catds :: ISO8211.DataFile -> [CATD]
 catds df = 
     let rs = findRecords "CATD" df
         catd dr = CATD {
@@ -193,9 +194,9 @@ catds df =
 
 
 catxs = maybemdRecords "CATX" catx
-catxs :: DataRecord -> [CATX]
+catxs :: ISO8211.DataRecord -> [CATX]
 
-catx :: Map.Map String DataFieldT -> CATX
+catx :: Map.Map String ISO8211.DataFieldT -> CATX
 catx m = CATX {
          catx_rcnm = mdRecordField "RCNM" m,
          catx_rcid = mdRecordField "RCID" m,
@@ -205,10 +206,10 @@ catx m = CATX {
        }
 
 
-frids :: DataFile -> [FRID]
+frids :: ISO8211.DataFile -> [FRID]
 frids df = map frid $ findRecords "FRID" df
 
-frid :: DataRecord -> FRID
+frid :: ISO8211.DataRecord -> FRID
 frid dr = FRID {
        frid_rcnm = sdRecordField dr "RCNM",
        frid_rcid = sdRecordField dr "RCID", 
@@ -220,10 +221,10 @@ frid dr = FRID {
           }
 
 
-vrids :: DSPM -> DataFile -> [VRID]
+vrids :: DSPM -> ISO8211.DataFile -> [VRID]
 vrids dspm' df = map (vrid dspm') $ findRecords "VRID" df
 
-vrid    :: DSPM -> DataRecord -> VRID
+vrid    :: DSPM -> ISO8211.DataRecord -> VRID
 vrid dspm' dr = VRID {
              vrid_rcnm  = sdRecordField dr "RCNM",
              vrid_rcid  = sdRecordField dr "RCID",
@@ -237,7 +238,7 @@ vrid dspm' dr = VRID {
              vrid_sg3ds = sg3ds dspm' dr
            }
 
-vrpc :: DataRecord -> Maybe VRPC
+vrpc :: ISO8211.DataRecord -> Maybe VRPC
 vrpc r = 
     case (findSubRecord' "VRPC" r) of
       Nothing -> Nothing 
@@ -247,7 +248,7 @@ vrpc r =
                   vrpc_nvpt = sdRecordField dr "NVPT"
                 }
 
-sgcc :: DataRecord -> Maybe SGCC
+sgcc :: ISO8211.DataRecord -> Maybe SGCC
 sgcc r = 
     case (findSubRecord' "SGCC" r) of
       Nothing -> Nothing 
@@ -258,10 +259,10 @@ sgcc r =
                 }
 
 
-vrpts :: DataRecord -> [VRPT]
+vrpts :: ISO8211.DataRecord -> [VRPT]
 vrpts = maybemdRecords "VRPT" vrpt
 
-vrpt :: Map.Map String DataFieldT -> VRPT
+vrpt :: Map.Map String ISO8211.DataFieldT -> VRPT
 vrpt m = VRPT {
          vrpt_name = mdRecordField "NAME" m,
          vrpt_ornt = mdRecordField "ORNT" m,
@@ -270,19 +271,19 @@ vrpt m = VRPT {
          vrpt_mask = mdRecordField "MASK" m
        }
 
-attvs :: DataRecord -> [ATTV]
+attvs :: ISO8211.DataRecord -> [ATTV]
 attvs = maybemdRecords "ATTV" attv
 
-attv :: Map.Map String DataFieldT -> ATTV
+attv :: Map.Map String ISO8211.DataFieldT -> ATTV
 attv m = ATTV {
          attv_attl = mdRecordField "ATTL" m,
          attv_atvl = mdRecordField "ATVL" m
        }
 
-sg2ds :: DSPM -> DataRecord -> [SG2D]
+sg2ds :: DSPM -> ISO8211.DataRecord -> [SG2D]
 sg2ds dspm' = maybemdRecords "SG2D" (sg2d dspm')
 
-sg2d :: DSPM -> Map.Map String DataFieldT -> SG2D
+sg2d :: DSPM -> Map.Map String ISO8211.DataFieldT -> SG2D
 sg2d dspm' m = 
   let x, y :: Integer
       x = mdRecordField "YCOO" m
@@ -293,10 +294,10 @@ sg2d dspm' m =
       sg2d_xcoo = (fromInteger x) / mf
          }
 
-sg3ds :: DSPM -> DataRecord -> [SG3D]
+sg3ds :: DSPM -> ISO8211.DataRecord -> [SG3D]
 sg3ds dspm' = maybemdRecords "SG3D" (sg3d dspm')
 
-sg3d :: DSPM -> Map.Map String DataFieldT -> SG3D
+sg3d :: DSPM -> Map.Map String ISO8211.DataFieldT -> SG3D
 sg3d dspm' m = 
   let x, y, s :: Integer
       x = mdRecordField "YCOO" m
