@@ -47,8 +47,10 @@ library
   hs-source-dirs:      src  
   
   -- Modules exported by the library.
-  exposed-modules:      Data.S57,
-                        Data.S57.ISO8211,
+  exposed-modules:      Data.ISO8211,
+                        Data.ISO8211.Parser
+                        Data.ISO8211.Tree
+                        Data.S57,
                         Data.S57.RecordTypes
 
   -- Modules included in this library but not exported.

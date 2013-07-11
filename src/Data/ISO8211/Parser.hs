@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -}
 
-module Data.S57.ISO8211 (DataFile
+module Data.ISO8211.Parser (DataFile
                ,DataDescriptiveRecord
                ,DataRecord
                ,DataDescriptiveField
@@ -36,22 +36,11 @@ module Data.S57.ISO8211 (DataFile
                ,DataTypeCode (..)
                ,LexicalLevel (..)
                ,DataStructure (..)
+               ,dsSingleData, dsLinearStruct, dsMultiDimStruct
                ,DataFormat (..)
                ,DataField(..)
                ,DataFieldT(..)
                ,parseDataFile
-               , dsSingleData
-               , dsLinearStruct
-               , dsMultiDimStruct 
-               , findRecords
-               , findRecord
-               , findRecord'
-               , findSubRecord
-               , findSubRecord'
-               , findSubRecords
-               , sdRecordField
-               , mdRecordField
-               , maybemdRecords
                ) where
 
 import Data.ByteString (ByteString)
@@ -214,78 +203,6 @@ parseDR' ddr = do
   let dfs = map (\(t, lbs) -> (t, either error id $ 
                               parseOnly (ddrParserLookup ddr t) lbs)) bss
   return ((ichglvl, lid, ext, ver, appi, extCharSet), drsToTree' ddr dfs)
-
-
-
-
---
--- record navigation
---
-
-dropISORoot :: DataRecord -> DataRecord
-dropISORoot r 
-    | ((fst $ rootLabel r) == "0001") = head . subForest $ r
-    | otherwise = error $ "node is not a ISO 8211 Record Identifier:" ++ show r
-
-findRecords :: String -> DataFile -> [DataRecord]
-findRecords t (_, rs) =
-    filter (\n -> (fst . rootLabel $ n) == t) $ map dropISORoot rs
-
-findRecord' :: String -> DataFile -> Maybe DataRecord
-findRecord' t f = 
-    case (findRecords t f) of
-      [] -> Nothing
-      (x:_) -> Just x
-
-findRecord :: String -> DataFile -> DataRecord
-findRecord t f = 
-    maybe (error $ "unable to findRecord: " ++ t)
-          id $ findRecord' t f
-
-findRecordFieldLS :: String ->  DataRecord -> DataFieldT
-findRecordFieldLS t dr = 
-   let fs = dsLinearStruct . snd . rootLabel $ dr
-   in case (t `Map.lookup` fs) of
-        Nothing -> error $ "unable to find subfield: " ++ t
-        Just f -> f
-
-
-findSubRecords :: String -> DataRecord -> [DataRecord]
-findSubRecords t dr =
-    filter (\n -> (fst $ rootLabel n) == t) (subForest dr)
-
-
-findSubRecord' :: String -> DataRecord -> Maybe DataRecord
-findSubRecord' t r = 
-    case (findSubRecords t r) of
-      [] -> Nothing
-      (x:_) -> Just x
-
-findSubRecord :: String -> DataRecord -> DataRecord
-findSubRecord t r = 
-    maybe (error $ "unable to findSubRecord: " ++ t)
-          id $ findSubRecord' t r
-
-sdRecordField :: DataField t => DataRecord -> String -> t
-sdRecordField dr t = fromDataField (findRecordFieldLS t dr)
-
-mdRecords' :: String -> DataRecord -> Maybe [Map.Map String DataFieldT]
-mdRecords' t r = maybe Nothing (Just . dsMultiDimStruct . snd . rootLabel) 
-                 $ findSubRecord' t r
-
-mdRecords :: String -> DataRecord -> [Map.Map String DataFieldT]
-mdRecords t r = 
-    maybe (error $ "unable to find mdRecord: " ++ t) id 
-              $ mdRecords' t r
-                  
-mdRecordField :: DataField c => String -> Map.Map String DataFieldT -> c
-mdRecordField t m = 
-    fromDataField . maybe (error $ "unable to find tag: " ++ t) id 
-      $ t `Map.lookup` m
-
-maybemdRecords ::
-  String -> (Map.Map String DataFieldT -> a) -> DataRecord -> [a]
-maybemdRecords t c r = maybe [] (map c) $ mdRecords' t r
 
 
 --

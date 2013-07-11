@@ -89,17 +89,16 @@ module Data.S57.RecordTypes (
   MaskingIndicator
 ) where
 
-import Data.S57.ISO8211
 
 import Data.Word
-import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Time.Calendar
-import Data.Binary
 import Data.Binary.Get
 import Data.Time.Format
 import System.Locale
+
+import Data.ISO8211.Parser
 
 
 -- | Data set Identification field structure 'DSID'

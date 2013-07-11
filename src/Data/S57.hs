@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
-
 {-
 Copyright (c) 2013, Markus Barenhoff <alios@alios.org>
 All rights reserved.
@@ -29,13 +27,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -}
 
 module Data.S57 (
+  module Data.S57.RecordTypes,
   DataFileS57 (..),
-  s57dataFile,
-  module Data.S57.RecordTypes
+  s57dataFile
 ) where
 
-import Data.S57.ISO8211
-import Data.Tree
+import Data.ISO8211
 import qualified Data.Map as Map
 
 import Data.S57.RecordTypes
