@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-
 Copyright (c) 2013, Markus Barenhoff <alios@alios.org>
@@ -42,7 +43,7 @@ module Data.S57.RecordTypes (
   DSHT (..),
   -- *** Data set accuracy record (DSAC)
   DSAC (..),
-  
+
   -- ** Catalog records
   -- *** Catalog directory record (CATD)
   CATD (..),
@@ -90,15 +91,15 @@ module Data.S57.RecordTypes (
 ) where
 
 
-import Data.Word
-import qualified Data.ByteString as BS
+import           Data.Binary.Get
+import qualified Data.ByteString      as BS
 import qualified Data.ByteString.Lazy as BL
-import Data.Time.Calendar
-import Data.Binary.Get
-import Data.Time.Format
-import System.Locale
+import           Data.Time.Calendar
+import           Data.Time.Format
+import           Data.Word
+import           System.Locale
 
-import Data.ISO8211.Parser
+import           Data.ISO8211.Parser
 
 
 -- | Data set Identification field structure 'DSID'
@@ -110,7 +111,7 @@ data DSID = DSID {
       dsid_dsnm :: !String, -- ^ Data set name
       dsid_edtn :: !String, -- ^ Edition number
       dsid_updn :: !String, -- ^ Update number
-      dsid_uadt :: !(Maybe Day), -- ^ Update application date 
+      dsid_uadt :: !(Maybe Day), -- ^ Update application date
       dsid_isdt :: !Day, -- ^ Issue date
       dsid_sted :: !Double, -- ^ Edition number of S-57 (3.0, 3.1)
       dsid_prsp :: !PRSP, -- ^ Product specification
@@ -121,7 +122,7 @@ data DSID = DSID {
       dsid_comt :: !String, -- ^ Comment
       dsid_dssi :: !DSSI -- ^ Data set structure information field
     } deriving (Eq, Show)
-  
+
 -- | Data set structure information field 'DSSI'
 data DSSI = DSSI {
       dssi_dstr :: !(Maybe DataStruct), -- ^ Data structure
@@ -134,7 +135,7 @@ data DSSI = DSSI {
       dssi_noin :: !Integer, -- ^ Number of isolated node records
       dssi_nocn :: !Integer, -- ^ Number of connected node records
       dssi_noed :: !Integer, -- ^ Number of edge records
-      dssi_nofa :: !Integer  -- ^ Number of face records    
+      dssi_nofa :: !Integer  -- ^ Number of face records
     } deriving (Eq, Show)
 
 
@@ -210,18 +211,18 @@ data DSAC = DSAC {
 
 -- | Catalogue directory record (CATD)
 data CATD = CATD {
-      catd_rcnm :: !String, -- ^  Record name
-      catd_rcid :: !Integer, -- ^ Record identification number
-      catd_file :: !String, -- ^  File name
-      catd_lfil :: !String, -- ^  File long name
-      catd_volm :: !String, -- ^  Volume
-      catd_impl :: !String, -- ^  Implementation
-      catd_slat :: !Double, -- ^  Souternmost Latitude
-      catd_wlon :: !Double, -- ^  Westernmost Longitude
-      catd_nlat :: !Double, -- ^  Nothermost Latitude
-      catd_elon :: !Double, -- ^  Easternmost Longitude
-      catd_crcs :: !String, -- ^  CRC
-      catd_comt :: !String, -- ^  Comment
+      catd_rcnm  :: !String, -- ^  Record name
+      catd_rcid  :: !Integer, -- ^ Record identification number
+      catd_file  :: !String, -- ^  File name
+      catd_lfil  :: !String, -- ^  File long name
+      catd_volm  :: !String, -- ^  Volume
+      catd_impl  :: !String, -- ^  Implementation
+      catd_slat  :: !Double, -- ^  Souternmost Latitude
+      catd_wlon  :: !Double, -- ^  Westernmost Longitude
+      catd_nlat  :: !Double, -- ^  Nothermost Latitude
+      catd_elon  :: !Double, -- ^  Easternmost Longitude
+      catd_crcs  :: !String, -- ^  CRC
+      catd_comt  :: !String, -- ^  Comment
       catd_catxs :: [CATX]
 } deriving (Eq, Show)
 
@@ -278,14 +279,14 @@ data FRID = FRID {
 
 -- | Vector record
 data VRID = VRID {
-      vrid_rcnm :: !VectorRecordIdentifier, -- ^ Record name
-      vrid_rcid :: !Word32, -- ^ Record identification number 
-      vrid_rver :: !Integer, -- ^ Record version
-      vrid_ruin :: !RUIN, -- ^ Record update instruction
+      vrid_rcnm  :: !VectorRecordIdentifier, -- ^ Record name
+      vrid_rcid  :: !Word32, -- ^ Record identification number
+      vrid_rver  :: !Integer, -- ^ Record version
+      vrid_ruin  :: !RUIN, -- ^ Record update instruction
       vrid_attvs :: !([ATTV]), -- ^ Attribute Fields
-      vrid_vrpc :: !(Maybe VRPC), -- ^ Pointer Control Field
-      vrid_vrpt :: !([VRPT]), -- ^ Pointer Fields
-      vrid_sgcc :: !(Maybe SGCC), -- ^ Coordinate Control Field
+      vrid_vrpc  :: !(Maybe VRPC), -- ^ Pointer Control Field
+      vrid_vrpt  :: !([VRPT]), -- ^ Pointer Fields
+      vrid_sgcc  :: !(Maybe SGCC), -- ^ Coordinate Control Field
       vrid_sg2ds :: !([SG2D]), -- ^ 2-D coodrinate fields
       vrid_sg3ds :: !([SG3D])  -- ^ 3-D coodrinate (Sounding Array) fields
 } deriving (Eq, Show)
@@ -341,12 +342,12 @@ type Name = (Word8, Word32)
 -- data types
 --
 
-data EXPP 
-    = DataSetIsNew 
+data EXPP
+    = DataSetIsNew
     | DataSetIsRevision
     deriving (Eq, Show)
 
-data DataStruct 
+data DataStruct
     = CartographicSpaghetti
     | ChainMode
     | PlanarGraph
@@ -354,13 +355,13 @@ data DataStruct
     deriving (Eq, Show)
 
 data PRSP
-    = ElectronicNavigationalChart 
+    = ElectronicNavigationalChart
     | IHOObjectCatalogueDataDictionary
     deriving (Eq, Show)
 
-data PROF 
-    = ENCNew 
-    | ENCRevision 
+data PROF
+    = ENCNew
+    | ENCRevision
     | IHODataDictionary
     deriving (Eq, Show)
 
@@ -372,14 +373,14 @@ data COUN
 
 -- | The vector record identifier field hold the record identifier (key) for that vector record.
 --   It is also used to diffentiate between the various types of vector records.
-data VectorRecordIdentifier 
+data VectorRecordIdentifier
     = IsolatedNode
     | ConnectedNode
     | Edge
     | Face
     deriving (Eq, Show)
 
-data RUIN 
+data RUIN
     = Insert
     | Delete
     | Modify
@@ -389,14 +390,14 @@ data RUIN
 -- | The direction in which an edge is to be interpreted for a particular area is indicated in the
 --   'Orientation' subfield.
 data Orientation
-    = Forward 
-    | Reverse 
+    = Forward
+    | Reverse
     | OrientNULL
     deriving (Eq, Show)
 
 -- | The In the case of areas consisting of one outer boundary and one or more non-intersecting
 --   inner boundaries (areas with holes), the 'UsageIndicator' subfield is used to distinguish
---   between interior and exterior boundaries. The subfield is also used to indicate that an 
+--   between interior and exterior boundaries. The subfield is also used to indicate that an
 --   exterior boundary is part of the data limit.
 data UsageIndicator
     = Exterior
@@ -415,8 +416,8 @@ data TopologyIndicator
     deriving (Show, Eq)
 
 -- | Under certain circumstances it may be necessary to suppress the symbolization of one or more edges which define the inner or outer boundary of an area. Suppression off the symbolization can be controlled by using the 'MaskingIndicator'.
-data MaskingIndicator 
-    = MaskMask 
+data MaskingIndicator
+    = MaskMask
     | MaskShow
     deriving (Show, Eq)
 
@@ -438,25 +439,50 @@ instance DataField Word8 where
     fromDataField (DFInteger i) = fromInteger i
     fromDataField v = error $ "invalid word8 " ++ show v
 
+instance DataField (Maybe Day) where
+    fromDataField (DFString s) =
+        parseTime defaultTimeLocale "%Y%m%d" s
+    fromDataField f = error $ "unable to decode Date from:" ++ show f
+
+instance DataField Day where
+    fromDataField f =
+        maybe (error $ "unable to parse date: " ++ show f) id $ fromDataField f
+
+
+instance DataField LexicalLevel where
+    fromDataField (DFInteger i) =
+        case i of
+          0 -> LexicalLevel0
+          1 -> LexicalLevel1
+          2 -> LexicalLevel2
+          j -> error $ "invalid LexicalLevel: " ++ show j
+    fromDataField i = error $ "unable to decode lexical level from:" ++ show i
+
+instance DataField Name where
+    fromDataField (DFByteString bs) =
+        let (a,b) = BS.splitAt 1 bs
+        in (BS.head a, runGet getWord32le $ BL.fromChunks [b])
+    fromDataField i = error $ "unable to decode Name Field from: " ++ show i
+
 instance DataField EXPP where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "N") then DataSetIsNew else
             if (s == "R") then DataSetIsRevision else
                 error $ "invalid EXPP: " ++ show s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         if (i == 1) then DataSetIsNew else
             if (i == 2) then DataSetIsRevision else
                 error $ "invalid EXPP: " ++ show i
     fromDataField f = error $ "unable to decode ExchangePurpose from:" ++ show f
 
 instance DataField (Maybe GeoPrimitive) where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "P") then Just Point else
             if (s == "L") then Just Line else
                 if (s == "A") then Just Area else
                     if (s == "N") then Nothing else
                         error $ "invalid GeoPrimitive: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> Just Point
           2 -> Just Line
@@ -466,14 +492,14 @@ instance DataField (Maybe GeoPrimitive) where
     fromDataField f = error $ "unable to decode DataStruct from:" ++ show f
 
 instance DataField (Maybe DataStruct) where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "CS") then Just CartographicSpaghetti else
             if (s == "CN") then Just ChainMode else
                 if (s == "PG") then Just PlanarGraph else
                     if (s == "FT") then Just FullTopology else
                         if (s == "NO") then Nothing else
                             error $ "invalid Orientation: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> Just CartographicSpaghetti
           2 -> Just ChainMode
@@ -486,11 +512,11 @@ instance DataField (Maybe DataStruct) where
 
 
 instance DataField PRSP where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "ENC") then ElectronicNavigationalChart else
             if (s == "ODD") then IHOObjectCatalogueDataDictionary else
                 error $ "invalid ProductSpec: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> ElectronicNavigationalChart
           2 -> IHOObjectCatalogueDataDictionary
@@ -499,13 +525,13 @@ instance DataField PRSP where
 
 
 instance DataField VectorRecordIdentifier where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "VI") then IsolatedNode else
             if (s == "VC") then ConnectedNode else
                 if (s == "VE") then Edge else
                     if (s == "VF") then Face else
                         error $ "invalid VectorRecordIdentifier: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           110 -> IsolatedNode
           120 -> ConnectedNode
@@ -515,12 +541,12 @@ instance DataField VectorRecordIdentifier where
     fromDataField f = error $ "unable to decode VectorRecordIdentifier from:" ++ show f
 
 instance DataField PROF where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "EN") then ENCNew else
             if (s == "ER") then ENCRevision else
                 if (s == "DD") then IHODataDictionary else
                     error $ "invalid PROF: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> ENCNew
           2 -> ENCRevision
@@ -530,12 +556,12 @@ instance DataField PROF where
 
 
 instance DataField COUN where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "LL") then LatitudeLongitude else
             if (s == "EN") then EastingNorthing else
                 if (s == "UC") then UnitsOnTheChartMap else
                     error $ "invalid PROF: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> LatitudeLongitude
           2 -> EastingNorthing
@@ -544,47 +570,29 @@ instance DataField COUN where
     fromDataField f = error $ "unable to decode COUN from:" ++ show f
 
 
-instance DataField (Maybe Day) where
-    fromDataField (DFString s) = 
-        parseTime defaultTimeLocale "%Y%m%d" s
-    fromDataField f = error $ "unable to decode Date from:" ++ show f
-    
-instance DataField Day where
-    fromDataField f = 
-        maybe (error $ "unable to parse date: " ++ show f) id $ fromDataField f
- 
 
-instance DataField LexicalLevel where
-    fromDataField (DFInteger i) = 
-        case i of
-          0 -> LexicalLevel0
-          1 -> LexicalLevel1
-          2 -> LexicalLevel2
-          j -> error $ "invalid LexicalLevel: " ++ show j
-    fromDataField i = error $ "unable to decode lexical level from:" ++ show i
-                      
 instance DataField RUIN where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "I") then Insert  else
             if (s == "D") then Delete else
                 if (s == "M") then Modify else
                     error $ "invalid PROF: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> Insert
           2 -> Delete
           3 -> Modify
           j -> error $ "invalid RUIN: " ++ show j
     fromDataField i = error $ "unable to decode RUIN from:" ++ show i
-    
+
 
 instance DataField (Maybe Orientation) where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "F") then Just Forward else
             if (s == "R") then Just Reverse else
                 if (s == "N") then Nothing else
                     error $ "invalid Orientation: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> Just Forward
           2 -> Just Reverse
@@ -593,13 +601,13 @@ instance DataField (Maybe Orientation) where
     fromDataField i = error $ "unable to decode Orientation from:" ++ show i
 
 instance DataField (Maybe UsageIndicator) where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "E") then Just Exterior else
             if (s == "I") then Just Interior else
                 if (s == "C") then Just ExteriorBoundaryTruncated else
                     if (s == "N") then Nothing else
                         error $ "invalid Usage Indicator: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> Just Exterior
           2 -> Just Interior
@@ -610,7 +618,7 @@ instance DataField (Maybe UsageIndicator) where
 
 
 instance DataField (Maybe TopologyIndicator) where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "B") then Just BeginningNode else
             if (s == "E") then Just EndNode else
                 if (s == "S") then Just LeftFace else
@@ -618,7 +626,7 @@ instance DataField (Maybe TopologyIndicator) where
                         if (s == "F") then Just ContainingFace else
                             if (s == "N") then Nothing else
                                 error $ "invalid Topology Indicator: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> Just BeginningNode
           2 -> Just EndNode
@@ -629,18 +637,13 @@ instance DataField (Maybe TopologyIndicator) where
           j -> error $ "invalid Topology Indicator: " ++ show j
     fromDataField i = error $ "unable to decode Topology Indicator from:" ++ show i
 
-instance DataField Name where
-    fromDataField (DFByteString bs) = 
-        let (a,b) = BS.splitAt 1 bs        
-        in (BS.head a, runGet getWord32le $ BL.fromChunks [b])
-    fromDataField i = error $ "unable to decode Name Field from: " ++ show i
 instance DataField (Maybe MaskingIndicator) where
-    fromDataField (DFString s) = 
+    fromDataField (DFString s) =
         if (s == "M") then Just MaskMask else
             if (s == "S") then Just MaskShow else
                 if (s == "N") then Nothing else
                     error $ "invalid Masking Indicator: " ++ s
-    fromDataField (DFInteger i) = 
+    fromDataField (DFInteger i) =
         case i of
           1 -> Just MaskMask
           2 -> Just MaskShow

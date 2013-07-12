@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 module Data.ISO8211.Tree
     ( dsSingleData
     , dsLinearStruct
-    , dsMultiDimStruct 
+    , dsMultiDimStruct
     , findRecords
     , findRecord
     , findRecord'
@@ -39,12 +39,12 @@ module Data.ISO8211.Tree
     , sdRecordField
     , mdRecordField
     , mdRecords
-    , maybemdRecords ) where 
+    , maybemdRecords ) where
 
 
-import Data.Tree
-import qualified Data.Map as Map
-import Data.ISO8211.Parser
+import           Data.ISO8211.Parser
+import qualified Data.Map            as Map
+import           Data.Tree
 
 
 --
@@ -52,7 +52,7 @@ import Data.ISO8211.Parser
 --
 
 dropISORoot :: DataRecord -> DataRecord
-dropISORoot r 
+dropISORoot r
     | ((fst $ rootLabel r) == "0001") = head . subForest $ r
     | otherwise = error $ "node is not a ISO 8211 Record Identifier:" ++ show r
 
@@ -61,18 +61,18 @@ findRecords t (_, rs) =
     filter (\n -> (fst . rootLabel $ n) == t) $ map dropISORoot rs
 
 findRecord' :: String -> DataFile -> Maybe DataRecord
-findRecord' t f = 
+findRecord' t f =
     case (findRecords t f) of
       [] -> Nothing
       (x:_) -> Just x
 
 findRecord :: String -> DataFile -> DataRecord
-findRecord t f = 
+findRecord t f =
     maybe (error $ "unable to findRecord: " ++ t)
           id $ findRecord' t f
 
 findRecordFieldLS :: String ->  DataRecord -> DataFieldT
-findRecordFieldLS t dr = 
+findRecordFieldLS t dr =
    let fs = dsLinearStruct . snd . rootLabel $ dr
    in case (t `Map.lookup` fs) of
         Nothing -> error $ "unable to find subfield: " ++ t
@@ -85,13 +85,13 @@ findSubRecords t dr =
 
 
 findSubRecord' :: String -> DataRecord -> Maybe DataRecord
-findSubRecord' t r = 
+findSubRecord' t r =
     case (findSubRecords t r) of
       [] -> Nothing
       (x:_) -> Just x
 
 findSubRecord :: String -> DataRecord -> DataRecord
-findSubRecord t r = 
+findSubRecord t r =
     maybe (error $ "unable to findSubRecord: " ++ t)
           id $ findSubRecord' t r
 
@@ -99,17 +99,17 @@ sdRecordField :: DataField t => DataRecord -> String -> t
 sdRecordField dr t = fromDataField (findRecordFieldLS t dr)
 
 mdRecords' :: String -> DataRecord -> Maybe [Map.Map String DataFieldT]
-mdRecords' t r = maybe Nothing (Just . dsMultiDimStruct . snd . rootLabel) 
+mdRecords' t r = maybe Nothing (Just . dsMultiDimStruct . snd . rootLabel)
                  $ findSubRecord' t r
 
 mdRecords :: String -> DataRecord -> [Map.Map String DataFieldT]
-mdRecords t r = 
-    maybe (error $ "unable to find mdRecord: " ++ t) id 
+mdRecords t r =
+    maybe (error $ "unable to find mdRecord: " ++ t) id
               $ mdRecords' t r
-                  
+
 mdRecordField :: DataField c => String -> Map.Map String DataFieldT -> c
-mdRecordField t m = 
-    fromDataField . maybe (error $ "unable to find tag: " ++ t) id 
+mdRecordField t m =
+    fromDataField . maybe (error $ "unable to find tag: " ++ t) id
       $ t `Map.lookup` m
 
 maybemdRecords ::

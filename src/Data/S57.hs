@@ -32,19 +32,19 @@ module Data.S57 (
   s57dataFile
 ) where
 
-import qualified Data.ISO8211 as ISO8211
-import Data.ISO8211.Tree
-import qualified Data.Map as Map
+import qualified Data.ISO8211         as ISO8211
+import           Data.ISO8211.Tree
+import qualified Data.Map             as Map
 
-import Data.S57.RecordTypes
+import           Data.S57.RecordTypes
 
 -- | a S-57 Datafile
 data DataFileS57 = DataFileS57 {
-      df_dsid :: !(Maybe DSID),
-      df_dspm :: !(Maybe DSPM),
-      df_dsht :: !(Maybe DSHT),
-      df_dsac :: !(Maybe DSAC),
-      df_catd :: !([CATD]),
+      df_dsid  :: !(Maybe DSID),
+      df_dspm  :: !(Maybe DSPM),
+      df_dsht  :: !(Maybe DSHT),
+      df_dsac  :: !(Maybe DSAC),
+      df_catd  :: !([CATD]),
       df_frids :: !([FRID]),
       df_vrids :: !([VRID])
 } deriving (Eq, Show)
@@ -70,9 +70,9 @@ s57dataFile f =
              df_vrids = vrids'
            }
 
--- | get the 'DSID' from a ISO-8211 'DataFile' 
+-- | get the 'DSID' from a ISO-8211 'DataFile'
 dsid :: ISO8211.DataFile -> Maybe DSID
-dsid df = 
+dsid df =
  case (findRecord' "DSID" df) of
    Nothing -> Nothing
    Just dr -> Just DSID {
@@ -94,12 +94,10 @@ dsid df =
           dsid_comt = sdRecordField dr "COMT",
           dsid_dssi = dssi dr
         }
-
-    
-dssi :: ISO8211.DataRecord -> DSSI
-dssi r =  
-    let dr = findSubRecord "DSSI" r
-    in DSSI {
+   where dssi :: ISO8211.DataRecord -> DSSI
+         dssi r =
+             let dr = findSubRecord "DSSI" r
+             in DSSI {
                   dssi_dstr = sdRecordField dr "DSTR",
                   dssi_aall = sdRecordField dr "AALL",
                   dssi_nall = sdRecordField dr "NALL",
@@ -111,10 +109,10 @@ dssi r =
                   dssi_nocn = sdRecordField dr "NOCN",
                   dssi_noed = sdRecordField dr "NOED",
                   dssi_nofa = sdRecordField dr "NOFA"
-           }
+                    }
 
 dspm :: ISO8211.DataFile -> Maybe DSPM
-dspm df = 
+dspm df =
  case (findRecord' "DSPM" df) of
    Nothing -> Nothing
    Just dr -> Just  DSPM {
@@ -133,97 +131,89 @@ dspm df =
       dspm_comt = sdRecordField dr "COMT",
       dspm_dspr = dspr dr,
       dspm_dsrc = dsrcs dr
-}
+             }
+     where dspr :: ISO8211.DataRecord -> Maybe DSPR
+           dspr r = case (findSubRecord' "DSPR" r) of
+                      Nothing -> Nothing
+                      Just dr' -> Just DSPR {
+             dspr_proj = sdRecordField dr' "PROJ",
+             dspr_prp1 = sdRecordField dr' "PRP1",
+             dspr_prp2 = sdRecordField dr' "PRP2",
+             dspr_prp3 = sdRecordField dr' "PRP3",
+             dspr_prp4 = sdRecordField dr' "PRP4",
+             dspr_feas = sdRecordField dr' "FEAS",
+             dspr_fnor = sdRecordField dr' "FNOR",
+             dspr_fpmf = sdRecordField dr' "FPMF",
+             dspr_comt = sdRecordField dr' "COMT"
+                                }
 
+           dsrcs :: ISO8211.DataRecord -> [DSRC]
+           dsrcs = map dsrc . findSubRecords "DSRC"
 
-
-
-dspr :: ISO8211.DataRecord -> Maybe DSPR
-dspr r = case (findSubRecord' "DSPR" r) of
-           Nothing -> Nothing
-           Just dr -> Just DSPR {
-             dspr_proj = sdRecordField dr "PROJ", 
-             dspr_prp1 = sdRecordField dr "PRP1",
-             dspr_prp2 = sdRecordField dr "PRP2",
-             dspr_prp3 = sdRecordField dr "PRP3",
-             dspr_prp4 = sdRecordField dr "PRP4", 
-             dspr_feas = sdRecordField dr "FEAS", 
-             dspr_fnor = sdRecordField dr "FNOR", 
-             dspr_fpmf = sdRecordField dr "FPMF",
-             dspr_comt = sdRecordField dr "COMT"
-           }
-
-
-
-dsrcs :: ISO8211.DataRecord -> [DSRC]
-dsrcs = map dsrc . findSubRecords "DSRC"
-
-dsrc :: ISO8211.DataRecord -> DSRC
-dsrc dr = 
-    let fpmf,ryco,rxco :: Integer
-        fpmf = sdRecordField dr "FPMF"
-        ryco =  sdRecordField dr "RYCO"
-        rxco = sdRecordField dr "RXCO"
-
-    in DSRC {
-            dsrc_rpid = sdRecordField dr "RPID",
+           dsrc :: ISO8211.DataRecord -> DSRC
+           dsrc dr' = let fpmf,ryco,rxco :: Integer
+                          fpmf = sdRecordField dr' "FPMF"
+                          ryco = sdRecordField dr' "RYCO"
+                          rxco = sdRecordField dr' "RXCO"
+                      in DSRC {
+            dsrc_rpid = sdRecordField dr' "RPID",
             dsrc_ryco = (fromInteger ryco) / (fromInteger fpmf),
             dsrc_rxco = (fromInteger rxco) / (fromInteger fpmf),
-            dsrc_curp = sdRecordField dr "CURP",
+            dsrc_curp = sdRecordField dr' "CURP",
             dsrc_fpmf = fpmf,
-            dsrc_rxvl = sdRecordField dr "RXVL",
-            dsrc_ryvl = sdRecordField dr "RYVL", 
-            dsrc_comt = sdRecordField dr "COMT"
-          }
+            dsrc_rxvl = sdRecordField dr' "RXVL",
+            dsrc_ryvl = sdRecordField dr' "RYVL",
+            dsrc_comt = sdRecordField dr' "COMT"
+                            }
 
 dsht :: ISO8211.DataFile -> Maybe DSHT
 dsht df =
  case (findRecord' "DSHT" df) of
    Nothing -> Nothing
-   Just dr -> 
+   Just dr ->
        Just DSHT {
                   dsht_rcnm = sdRecordField dr "RCNM",
-                  dsht_rcid = sdRecordField dr "RCID", 
-                  dsht_prco = sdRecordField dr "PRCO", 
+                  dsht_rcid = sdRecordField dr "RCID",
+                  dsht_prco = sdRecordField dr "PRCO",
                   dsht_esdt = sdRecordField dr "ESDT",
-                  dsht_lsdt = sdRecordField dr "LSDT", 
+                  dsht_lsdt = sdRecordField dr "LSDT",
                   dsht_dcrt = sdRecordField dr "DCRT",
                   dsht_codt = sdRecordField dr "CODT",
                   dsht_comt = sdRecordField dr "COMT"
-                }    
+                }
 
 dsac :: ISO8211.DataFile -> Maybe DSAC
 dsac df =
  case (findRecord' "DSAC" df) of
    Nothing -> Nothing
-   Just dr -> 
+   Just dr ->
        let fpmr = fromInteger $ sdRecordField dr "FPMR"
        in Just DSAC {
                 dsac_rcnm = sdRecordField dr "RCNM",
                 dsac_rcid = sdRecordField dr "RCID",
                 dsac_pacc = (fromInteger $ sdRecordField dr "PACC") / fromInteger fpmr,
-                dsac_hacc = (fromInteger $ sdRecordField dr "HACC") / fromInteger fpmr, 
-                dsac_sacc = (fromInteger $ sdRecordField dr "SACC") / fromInteger fpmr, 
+                dsac_hacc = (fromInteger $ sdRecordField dr "HACC") / fromInteger fpmr,
+                dsac_sacc = (fromInteger $ sdRecordField dr "SACC") / fromInteger fpmr,
                 dsac_fpmf = fpmr,
                 dsac_comt = sdRecordField dr "RCID"
               }
 
 
 catds :: ISO8211.DataFile -> [CATD]
-catds df = 
+catds df =
     let rs = findRecords "CATD" df
         catd dr = CATD {
                catd_rcnm = sdRecordField dr "RCNM",
                catd_rcid = sdRecordField dr "RCID",
                catd_file = sdRecordField dr "FILE",
                catd_lfil = sdRecordField dr "LFIL",
-               catd_volm = sdRecordField dr "VOLM", 
-               catd_impl = sdRecordField dr "IMPL", 
+               catd_volm = sdRecordField dr "VOLM",
+               catd_impl = sdRecordField dr "IMPL",
                catd_slat = sdRecordField dr "SLAT",
-               catd_wlon = sdRecordField dr "WLON", 
-               catd_nlat = sdRecordField dr "NLAT", 
+               catd_wlon = sdRecordField dr "WLON",
+               catd_nlat = sdRecordField dr "NLAT",
                catd_elon = sdRecordField dr "ELON",
-               catd_crcs = sdRecordField dr "CRCS", 
+               catd_crcs = sdRecordField dr "CRCS",
                catd_comt = sdRecordField dr "COMT",
                catd_catxs = catxs dr
              }
@@ -249,11 +239,11 @@ frids df = map frid $ findRecords "FRID" df
 frid :: ISO8211.DataRecord -> FRID
 frid dr = FRID {
        frid_rcnm = sdRecordField dr "RCNM",
-       frid_rcid = sdRecordField dr "RCID", 
-       frid_prim = sdRecordField dr "PRIM", 
+       frid_rcid = sdRecordField dr "RCID",
+       frid_prim = sdRecordField dr "PRIM",
        frid_grup = sdRecordField dr "GRUP",
-       frid_objl = sdRecordField dr "OBJL", 
-       frid_rver = sdRecordField dr "RVER", 
+       frid_objl = sdRecordField dr "OBJL",
+       frid_rver = sdRecordField dr "RVER",
        frid_ruin = sdRecordField dr "RUIN"
           }
 
@@ -276,9 +266,9 @@ vrid dspm' dr = VRID {
            }
 
 vrpc :: ISO8211.DataRecord -> Maybe VRPC
-vrpc r = 
+vrpc r =
     case (findSubRecord' "VRPC" r) of
-      Nothing -> Nothing 
+      Nothing -> Nothing
       Just dr -> Just VRPC {
                   vrpc_vpui = sdRecordField dr "VPUI",
                   vrpc_vpix = sdRecordField dr "VPIX",
@@ -286,9 +276,9 @@ vrpc r =
                 }
 
 sgcc :: ISO8211.DataRecord -> Maybe SGCC
-sgcc r = 
+sgcc r =
     case (findSubRecord' "SGCC" r) of
-      Nothing -> Nothing 
+      Nothing -> Nothing
       Just dr -> Just SGCC {
                   sgcc_ccui = sdRecordField dr "VPUI",
                   sgcc_ccix = sdRecordField dr "VPIX",
@@ -321,7 +311,7 @@ sg2ds :: DSPM -> ISO8211.DataRecord -> [SG2D]
 sg2ds dspm' = maybemdRecords "SG2D" (sg2d dspm')
 
 sg2d :: DSPM -> Map.Map String ISO8211.DataFieldT -> SG2D
-sg2d dspm' m = 
+sg2d dspm' m =
   let x, y :: Integer
       x = mdRecordField "YCOO" m
       y = mdRecordField "XCOO" m
@@ -335,7 +325,7 @@ sg3ds :: DSPM -> ISO8211.DataRecord -> [SG3D]
 sg3ds dspm' = maybemdRecords "SG3D" (sg3d dspm')
 
 sg3d :: DSPM -> Map.Map String ISO8211.DataFieldT -> SG3D
-sg3d dspm' m = 
+sg3d dspm' m =
   let x, y, s :: Integer
       x = mdRecordField "YCOO" m
       y = mdRecordField "XCOO" m

@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 {-
 Copyright (c) 2013, Markus Barenhoff <alios@alios.org>
@@ -43,19 +44,19 @@ module Data.ISO8211.Parser (DataFile
                ,parseDataFile
                ) where
 
-import Data.ByteString (ByteString)
+import           Data.ByteString                  (ByteString)
 
-import Data.Binary
-import Data.Binary.Get
-import Data.Bits
-import Data.Tree
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy as BL
+import           Data.Binary
+import           Data.Binary.Get
+import           Data.Bits
+import qualified Data.ByteString                  as BS
+import qualified Data.ByteString.Lazy             as BL
+import           Data.Tree
 
-import Data.Attoparsec as P
+import           Data.Attoparsec                  as P
 import qualified Data.Attoparsec.ByteString.Char8 as C8
-import Data.Map (Map)
-import qualified Data.Map as Map
+import           Data.Map                         (Map)
+import qualified Data.Map                         as Map
 
 --
 -- external type definitions
@@ -66,11 +67,11 @@ type DataFile = (DataDescriptiveRecord, [DataRecord])
 type DataRecord = Tree DataFieldR
 type DataFieldR = (String, DataStructure)
 
-data DataDescriptiveRecord = 
+data DataDescriptiveRecord =
     DDR {
-      ddrFileName :: !String,
+      ddrFileName       :: !String,
       ddrFieldStructure :: ![(String, String)],
-      ddrDataFormats :: Map String DataDescriptiveField -- [(String, DataDescriptiveField)]
+      ddrDataFormats    :: Map String DataDescriptiveField -- [(String, DataDescriptiveField)]
     } deriving (Show, Eq)
 
 data DataFieldT =
@@ -95,19 +96,19 @@ instance DataField Double where
 instance DataField ByteString where
     fromDataField (DFByteString bs) = bs
     fromDataField v = error $ "fromDataFieldT is not a ByteString: " ++ show v
-  
+
 type DataDescriptiveField =
     (DataStructureCode, DataTypeCode, LexicalLevel, String, [(String, DataFormat)])
 
-data DataStructureCode = 
+data DataStructureCode =
     SingleDataItem | LinearStructure | MultiDimStructure
     deriving (Eq, Enum, Show)
 
-data DataTypeCode = 
+data DataTypeCode =
     CharacterString | ImplicitPointInt | ImplicitPointReal | BinaryForm | MixedDataType
     deriving (Eq, Show)
 
-data LexicalLevel = 
+data LexicalLevel =
     LexicalLevel0 | LexicalLevel1 | LexicalLevel2
     deriving (Eq, Enum, Show)
 
@@ -131,12 +132,12 @@ data DataStructure = SD DataFieldT
 
 type DataDescr = (DataStructureCode, [String])
 
-type FieldControlField = 
+type FieldControlField =
     (DataStructureCode, DataTypeCode, LexicalLevel, String, [(String, String)])
 
 instance Enum DataTypeCode where
     toEnum 0 = CharacterString
-    toEnum 1 = ImplicitPointInt 
+    toEnum 1 = ImplicitPointInt
     toEnum 2 = ImplicitPointReal
     toEnum 5 = BinaryForm
     toEnum 6 = MixedDataType
@@ -155,13 +156,13 @@ dsLinearStruct :: DataStructure -> (Map String DataFieldT)
 dsLinearStruct (LS fs) = fs
 dsLinearStruct t = error $ "not a Linear Structure: " ++ show t
 dsMultiDimStruct :: DataStructure -> [Map String DataFieldT]
-dsMultiDimStruct (MDS fss) = fss 
+dsMultiDimStruct (MDS fss) = fss
 dsMultiDimStruct t = error $ "not a Multi Dim Structure: " ++ show t
 
 
 
 --
--- exports 
+-- exports
 --
 parseDataFile :: Parser DataFile
 parseDataFile = do
@@ -178,11 +179,11 @@ parseDDR' = do
   (shieldTagF, ds) <- parseEntryMap
   bs <- P.take fieldAreaLen
 
-  let ((_, rr):rs) = [(t, BS.take l $ BS.drop p bs) | (t,p,l) <- ds] 
-  let (_,_,_,fname, fstruct) = 
+  let ((_, rr):rs) = [(t, BS.take l $ BS.drop p bs) | (t,p,l) <- ds]
+  let (_,_,_,fname, fstruct) =
           either error id $ parseOnly  (parseFieldControlField fcl shieldTagF) rr
-  
-  let rs'= [(a, either error id $ parseOnly 
+
+  let rs'= [(a, either error id $ parseOnly
              (parseDataDescriptiveField fcl) b) | (a,b) <- rs]
 
   let ddr =  DDR fname fstruct $ Map.fromList rs'
@@ -198,15 +199,15 @@ parseDR' ddr = do
   (ichglvl, lid, ext, ver, appi, _, extCharSet, fieldAreaLen) <- parseLeader
   (_, ds) <- parseEntryMap
   bs <- P.take fieldAreaLen
-  let bss = [ (t, BS.take l $ BS.drop p bs) | (t,p,l) <- ds] 
-  let dfs = map (\(t, lbs) -> (t, either error id $ 
+  let bss = [ (t, BS.take l $ BS.drop p bs) | (t,p,l) <- ds]
+  let dfs = map (\(t, lbs) -> (t, either error id $
                               parseOnly (ddrParserLookup ddr t) lbs)) bss
   return ((ichglvl, lid, ext, ver, appi, extCharSet), drsToTree' ddr dfs)
 
 
 --
 -- internal
--- 
+--
 unitTerminator, recordTerminator :: Char
 unitTerminator = '\US'
 recordTerminator = '\RS'
@@ -217,19 +218,19 @@ parseRT = do _ <- C8.char recordTerminator; return ()
 
 ddrParserLookup :: DataDescriptiveRecord -> String -> Parser DataStructure
 ddrParserLookup ddr t = do
-  let (sc, _, esc, _, dfs) = maybe (error $ "unknown field: " ++ t) id 
+  let (sc, _, esc, _, dfs) = maybe (error $ "unknown field: " ++ t) id
                              $ Map.lookup t (ddrDataFormats ddr)
   dfsParser dfs esc sc
 
-dfsParser :: 
-    [(String, DataFormat)] -> LexicalLevel -> DataStructureCode 
+dfsParser ::
+    [(String, DataFormat)] -> LexicalLevel -> DataStructureCode
     -> Parser DataStructure
 dfsParser dfs esc sc =
     let mfp = sequence $ map fieldParser $ dfs
         fieldParser (t, p) = do
           v <- dataFormatToParser esc p
           return $ (t, v)
-    in do res <- case sc of 
+    in do res <- case sc of
                   SingleDataItem -> do
                       (_, r) <- fmap head $  mfp
                       _ <- parseRT
@@ -251,16 +252,16 @@ dataFormatToParser _ (CharacterData l) = fmap DFString $
       Just i ->  count (fromInteger i) C8.anyChar
 dataFormatToParser esc (ImplicitPoint l) = do
     (DFString s) <- dataFormatToParser esc (CharacterData l)
-    return $ if (length s == 0) 
+    return $ if (length s == 0)
              then DFInteger 0
              else DFInteger (read s)
 dataFormatToParser esc (ExplicitPoint l) = do
     (DFString s) <- dataFormatToParser esc (CharacterData l)
-    return $ if (length s == 0) 
+    return $ if (length s == 0)
              then DFReal 0.0
              else DFReal (read s)
 dataFormatToParser _ (BitString l) = fmap DFByteString $
-    case l of 
+    case l of
       Nothing -> fmap BS.pack $ anyWord8 `manyTill` (try $ parseUT)
       Just l' -> P.take (fromInteger l' `div` 8)
 dataFormatToParser _ (UnsignedInt l) = do
@@ -301,7 +302,7 @@ sintParser p =
         c2 = toInteger $ 1 + (complement ui)
         msbSet = testBit ui ((bitSize ui) - 1)
     in if (msbSet) then (negate c2)  else (toInteger ui)
- 
+
 drsToTree' :: DataDescriptiveRecord -> [DataFieldR] -> Tree DataFieldR
 drsToTree' ddr dfs  =
     let cs' k = ddrLookupChildFields ddr k
@@ -327,7 +328,7 @@ parseDataFormatLength = tryMaybe $ do
 
 parseDataFormat' :: Parser DataFormat
 parseDataFormat' =
-    let parsers =                   
+    let parsers =
             [ do _ <- C8.char 'A'
                  fl <- parseDataFormatLength
                  return $ CharacterData fl
@@ -335,7 +336,7 @@ parseDataFormat' =
                  fl <- parseDataFormatLength
                  return $ ImplicitPoint fl
             , do _ <- C8.char 'R'
-                 fl <- parseDataFormatLength                  
+                 fl <- parseDataFormatLength
                  return $ ExplicitPoint fl
             , do _ <- C8.char 'B'
                  fl <- parseDataFormatLength
@@ -344,9 +345,9 @@ parseDataFormat' =
                  fl <- parseDataFormatLength
                  return $ SubFieldLabel fl
             , do _ <- C8.char 'b'
-                 t <- choice $ map try 
+                 t <- choice $ map try
                       [ C8.char '1', C8.char '2']
-                 l <- fmap toInteger $ parseInt 1 
+                 l <- fmap toInteger $ parseInt 1
                  case t of
                    '1' -> return $ UnsignedInt l
                    '2' -> return $ SignedInt l
@@ -355,7 +356,7 @@ parseDataFormat' =
     in choice $ map try parsers
 
 parseDataFormat :: Parser (Integer, DataFormat)
-parseDataFormat = do 
+parseDataFormat = do
   mul <- tryMaybe $ fmap read $ try $ many1 C8.digit
   fmt <- parseDataFormat'
   return (maybe 1 id mul, fmt)
@@ -366,14 +367,14 @@ parseDataFormats = do
   _ <- C8.char '('
   fmts <- sepBy parseDataFormat (C8.char ',')
   _ <- C8.char ')'
-  return $ concat $ map (\ (c,f) -> replicate (fromInteger c) f) fmts
+  return . concat . map (\ (c,f) -> replicate (fromInteger c) f) $ fmts
 
 
 
 parseLeader ::
     Parser (Char, Char, Char, Char, Char, Int, String, Int)
 
-parseLeader = do 
+parseLeader = do
   len <- parseInt 5 <?> "record len"
   ichglvl <- C8.anyChar    <?> "interchange level"
   lid <- C8.anyChar   <?> "leader identifier"
@@ -383,7 +384,7 @@ parseLeader = do
   fcl <- parseFCL <?> "field control length"
   baseAddr <- parseInt 5 <?> "field control length"
   extCharSet <- count 3 C8.anyChar <?> "Extended character set indicator"
-               
+
   let fieldAreaLen = len - baseAddr
   return (ichglvl, lid, ext, ver, appi, fcl, extCharSet, fieldAreaLen)
 
@@ -400,7 +401,7 @@ parseEntryMap = do
   sFieldPosF <- parseInt 1 <?> "size of field position field"
   _ <- C8.char8 '0'
   sFieldTagF <- parseInt 1 <?> "size of field tag field"
-  let dirParser = 
+  let dirParser =
           do ftag <- count sFieldTagF C8.anyChar
              flen <- parseInt sFieldLengthF
              fpos <- parseInt sFieldPosF
@@ -414,16 +415,16 @@ parseInt :: Int -> Parser Int
 parseInt l = fmap read (count l $ C8.anyChar)
 
 parseDDFCtrl :: Parser (DataStructureCode, DataTypeCode, Char, Char, LexicalLevel)
-parseDDFCtrl = do 
+parseDDFCtrl = do
     s <- parseInt 1 <?> "data structure code"
     t <- parseInt 1 <?> "data type code"
     _ <- (count 2 $ C8.char '0') <?> "required 00 characters"
     f <- C8.anyChar <?> "printable field terminator"
     u <- C8.anyChar <?> "printable unit terminator"
     esc' <- count 3 C8.anyChar
-    let esc = 
-            if (esc' == "   ") 
-            then 0 else if (esc' == "-A ") 
+    let esc =
+            if (esc' == "   ")
+            then 0 else if (esc' == "-A ")
                         then 1 else if (esc' == "%/@") then 2 else
                                         error $ "unknown escape sequence " ++ esc'
     return (toEnum s, toEnum t, f,u, toEnum esc)
@@ -439,23 +440,23 @@ parseFieldControlField fcl sFieldTagF = do
   fieldCtrlBS <- P.take fcl
   case (parseOnly parseDDFCtrl fieldCtrlBS) of
     Left err -> fail err
-    Right (SingleDataItem, CharacterString, _ ,_,esc) -> 
-        do name <-  manyTill C8.anyChar (try $ parseUT) <?> "name" 
+    Right (SingleDataItem, CharacterString, _ ,_,esc) ->
+        do name <-  manyTill C8.anyChar (try $ parseUT) <?> "name"
            fieldTags <- manyTill (parseTagPair sFieldTagF) (try $ parseRT)
-           return (toEnum 0, toEnum 0,esc,name, fieldTags) 
+           return (toEnum 0, toEnum 0,esc,name, fieldTags)
     Right _ -> fail $ "first DDR filed must have tag 0000"
 
 
 
 parseDataDescr :: DataStructureCode -> Parser DataDescr
-parseDataDescr SingleDataItem = do 
+parseDataDescr SingleDataItem = do
   fn <- manyTill C8.anyChar (try $ parseUT)
   return (SingleDataItem, [fn])
 parseDataDescr LinearStructure = do
   fs <- (many1 $ C8.satisfy $ C8.notInClass (unitTerminator:"!")) `sepBy` (try $ C8.char '!')
   parseUT
   return (LinearStructure, fs)
-parseDataDescr MultiDimStructure = do 
+parseDataDescr MultiDimStructure = do
   _ <- C8.char '*'
   fs <- (many1 $ C8.satisfy $ C8.notInClass (unitTerminator:"!")) `sepBy` (try $ C8.char '!')
   parseUT
@@ -468,9 +469,9 @@ parseDataDescriptiveField fcl = do
   fieldCtrlBS <- P.take fcl
   case (parseOnly parseDDFCtrl fieldCtrlBS) of
     Left err -> fail err
-    Right (s,t,_,_,esc) -> 
-        do name <-  manyTill C8.anyChar (try $ parseUT) <?> "name" 
+    Right (s,t,_,_,esc) ->
+        do name <-  manyTill C8.anyChar (try $ parseUT) <?> "name"
            label <- (do (_,ls) <- parseDataDescr s; return ls) <?> "label"
            format <- (do fs <- parseDataFormats; parseRT; return fs) <?> "format"
-           return (s, t, esc,name, zip label format) 
+           return (s, t, esc,name, zip label format)
 

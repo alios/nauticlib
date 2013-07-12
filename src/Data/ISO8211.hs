@@ -26,10 +26,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -}
 
-module Data.ISO8211 
+module Data.ISO8211
     ( module Data.ISO8211.Parser
     , module Data.ISO8211.Tree
     ) where
 
-import Data.ISO8211.Parser
-import Data.ISO8211.Tree
+import           Data.ISO8211.Parser
+import           Data.ISO8211.Tree
