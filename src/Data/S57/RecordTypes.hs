@@ -87,7 +87,9 @@ module Data.S57.RecordTypes (
   Orientation,
   UsageIndicator,
   TopologyIndicator,
-  MaskingIndicator
+  MaskingIndicator,
+  ObjectOrAttribute,
+  TypeOfObjectOrAttribute
 ) where
 
 
@@ -237,6 +239,16 @@ data CATX = CATX  {
 
 
 data DDDF = DDDF {
+      dddf_rcnm :: !String, -- ^  Record name
+      dddf_rcid :: !Integer, -- ^ Record identification number
+      dddf_oora :: !ObjectOrAttribute, -- ^ Object or attribute
+      dddf_oaac :: !String, -- ^ Object or attribute acronym
+      dddf_oaco :: !Integer, -- ^ Object or attribute label/code
+      dddf_oall :: !String, -- ^ Object or attribute label
+      dddf_oaty :: !TypeOfObjectOrAttribute, -- ^ Type of object or attribute
+      dddf_defn :: !String, -- ^ Definition
+      dddf_auth :: !Integer, -- ^ Autorizing agency
+      dddf_comt :: !String -- ^ Comment
 } deriving (Eq, Show)
 
 
@@ -426,6 +438,22 @@ data GeoPrimitive
     | Line
     | Area
     deriving (Eq, Show)
+
+
+data ObjectOrAttribute
+    = IsObject
+    | IsAttribute
+    deriving (Show, Eq)
+
+data TypeOfObjectOrAttribute
+    = IsMetaObject
+    | IsCartographicObject
+    | IsGeoObject
+    | IsCollectionObject
+    | IsFeatureAttribute
+    | IsFeatureNationalAttribute
+    | IsSpatialAttribute
+    deriving (Show, Eq)
 
 --
 -- instance declarations
@@ -651,4 +679,35 @@ instance DataField (Maybe MaskingIndicator) where
           j -> error $ "invalid Masking Indicator: " ++ show j
     fromDataField i = error $ "unable to decode Masking Indicator from:" ++ show i
 
+instance DataField ObjectOrAttribute where
+    fromDataField (DFString s) =
+        if (s == "A") then IsAttribute else
+            if (s == "O") then IsObject else
+                error $ "invalid ObjectOrAttribute: " ++ show s
+    fromDataField (DFInteger i) =
+        if (i == 1) then IsAttribute else
+            if (i == 2) then IsObject else
+                error $ "invalid ObjectOrAttribute: " ++ show i
+    fromDataField f = error $ "unable to decode ObjectOrAttribute from:" ++ show f
+
+instance DataField TypeOfObjectOrAttribute where
+    fromDataField (DFString s) =
+        if (s == "M") then IsMetaObject else
+        if (s == "$") then IsCartographicObject else
+        if (s == "G") then IsGeoObject else
+        if (s == "C") then IsCollectionObject else
+        if (s == "F") then IsFeatureAttribute else
+        if (s == "N") then IsFeatureNationalAttribute else
+        if (s == "S") then IsSpatialAttribute else
+                error $ "invalid TypeOfObjectOrAttribute: " ++ show s
+    fromDataField (DFInteger i) =
+        if (i == 1) then IsMetaObject else
+        if (i == 2) then IsCartographicObject else
+        if (i == 3) then IsGeoObject else
+        if (i == 4) then IsCollectionObject else
+        if (i == 5) then IsFeatureAttribute else
+        if (i == 6) then IsFeatureNationalAttribute else
+        if (i == 7) then IsSpatialAttribute else
+                error $ "invalid ObjectOrAttribute: " ++ show i
+    fromDataField f = error $ "unable to decode ObjectOrAttribute from:" ++ show f
 

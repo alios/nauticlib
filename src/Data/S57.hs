@@ -44,7 +44,8 @@ data DataFileS57 = DataFileS57 {
       df_dspm  :: !(Maybe DSPM),
       df_dsht  :: !(Maybe DSHT),
       df_dsac  :: !(Maybe DSAC),
-      df_catd  :: !([CATD]),
+      df_catds :: !([CATD]),
+      df_dddfs :: !([DDDF]),
       df_frids :: !([FRID]),
       df_vrids :: !([VRID])
 } deriving (Eq, Show)
@@ -62,7 +63,8 @@ s57dataFile f =
               Just dspm'' -> vrids dspm'' f
     in DataFileS57 {
              df_dsid = dsid f,
-             df_catd = catds f,
+             df_catds = catds f,
+             df_dddfs = dddfs f,
              df_dspm = dspm',
              df_dsht = dsht f,
              df_dsac = dsac f,
@@ -191,9 +193,12 @@ dsac df =
        in Just DSAC {
                 dsac_rcnm = sdRecordField dr "RCNM",
                 dsac_rcid = sdRecordField dr "RCID",
-                dsac_pacc = (fromInteger $ sdRecordField dr "PACC") / fromInteger fpmr,
-                dsac_hacc = (fromInteger $ sdRecordField dr "HACC") / fromInteger fpmr,
-                dsac_sacc = (fromInteger $ sdRecordField dr "SACC") / fromInteger fpmr,
+                dsac_pacc = (fromInteger $ sdRecordField dr "PACC")
+                            / fromInteger fpmr,
+                dsac_hacc = (fromInteger $ sdRecordField dr "HACC")
+                            / fromInteger fpmr,
+                dsac_sacc = (fromInteger $ sdRecordField dr "SACC")
+                            / fromInteger fpmr,
                 dsac_fpmf = fpmr,
                 dsac_comt = sdRecordField dr "RCID"
               }
@@ -220,6 +225,22 @@ catds df =
     in map catd rs
 
 
+dddfs :: ISO8211.DataFile -> [DDDF]
+dddfs df =
+    let rs = findRecords "DDDF" df
+        dddf dr = DDDF {
+               dddf_rcnm = sdRecordField dr "RCNM",
+               dddf_rcid = sdRecordField dr "RCID",
+               dddf_oora = sdRecordField dr "OORA",
+               dddf_oaac = sdRecordField dr "OAAC",
+               dddf_oaco = sdRecordField dr "OACO",
+               dddf_oall = sdRecordField dr "OALL",
+               dddf_oaty = sdRecordField dr "OATY",
+               dddf_defn = sdRecordField dr "DEFN",
+               dddf_auth = sdRecordField dr "AUTH",
+               dddf_comt = sdRecordField dr "COMT"
+                  }
+    in map dddf rs
 catxs = maybemdRecords "CATX" catx
 catxs :: ISO8211.DataRecord -> [CATX]
 
