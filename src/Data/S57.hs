@@ -46,6 +46,7 @@ data DataFileS57 = DataFileS57 {
       df_dsac  :: !(Maybe DSAC),
       df_catds :: !([CATD]),
       df_dddfs :: !([DDDF]),
+      df_dddis :: !([DDDI]),
       df_frids :: !([FRID]),
       df_vrids :: !([VRID])
 } deriving (Eq, Show)
@@ -65,6 +66,7 @@ s57dataFile f =
              df_dsid = dsid f,
              df_catds = catds f,
              df_dddfs = dddfs f,
+             df_dddis = dddis f,
              df_dspm = dspm',
              df_dsht = dsht f,
              df_dsac = dsac f,
@@ -241,6 +243,22 @@ dddfs df =
                dddf_comt = sdRecordField dr "COMT"
                   }
     in map dddf rs
+
+dddis :: ISO8211.DataFile -> [DDDI]
+dddis df =
+    let rs = findRecords "DDDI" df
+        dddi dr = DDDI {
+               dddi_rcnm = sdRecordField dr "RCNM",
+               dddi_rcid = sdRecordField dr "RCID",
+               dddi_atlb = sdRecordField dr "ATLB",
+               dddi_atdo = sdRecordField dr "ATDO",
+               dddi_admu = sdRecordField dr "ADMU",
+               dddi_adft = sdRecordField dr "ADFT",
+               dddi_auth = sdRecordField dr "AUTH",
+               dddi_comt = sdRecordField dr "COMT"
+                  }
+    in map dddi rs
+
 catxs = maybemdRecords "CATX" catx
 catxs :: ISO8211.DataRecord -> [CATX]
 

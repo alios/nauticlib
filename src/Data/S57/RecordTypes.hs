@@ -257,6 +257,14 @@ data DDDR = DDDR {
 
 
 data DDDI = DDDI {
+      dddi_rcnm :: !String, -- ^  Record name
+      dddi_rcid :: !Integer, -- ^ Record identification number
+      dddi_atlb :: !Integer, -- ^ Attribute label/code
+      dddi_atdo :: !AttributeDomainCode, -- ^ Attribute domain code
+      dddi_admu :: !String, -- ^ Attribute domain value measurement unit
+      dddi_adft :: !String, -- ^ Attribute domain format
+      dddi_auth :: !Integer, -- ^ Autorizing agency
+      dddi_comt :: !String -- ^ Comment
 } deriving (Eq, Show)
 
 
@@ -454,6 +462,15 @@ data TypeOfObjectOrAttribute
     | IsFeatureNationalAttribute
     | IsSpatialAttribute
     deriving (Show, Eq)
+
+data AttributeDomainCode
+    = ADCEnumerated
+    | ADCListOfEnumeratedValues
+    | ADCFloat
+    | ADCInteger
+    | ADCCodeString
+    | ADCFreeTextFormat
+    deriving (Show,Eq)
 
 --
 -- instance declarations
@@ -710,4 +727,24 @@ instance DataField TypeOfObjectOrAttribute where
         if (i == 7) then IsSpatialAttribute else
                 error $ "invalid ObjectOrAttribute: " ++ show i
     fromDataField f = error $ "unable to decode ObjectOrAttribute from:" ++ show f
+
+
+instance DataField AttributeDomainCode where
+    fromDataField (DFString s) =
+        if (s == "E") then ADCEnumerated else
+        if (s == "L") then ADCListOfEnumeratedValues else
+        if (s == "F") then ADCFloat else
+        if (s == "I") then ADCInteger else
+        if (s == "A") then ADCCodeString else
+        if (s == "S") then ADCFreeTextFormat else
+                error $ "invalid AttributeDomainCode: " ++ show s
+    fromDataField (DFInteger i) =
+        if (i == 1) then ADCEnumerated else
+        if (i == 2) then ADCListOfEnumeratedValues else
+        if (i == 3) then ADCFloat else
+        if (i == 4) then ADCInteger else
+        if (i == 5) then ADCCodeString else
+        if (i == 6) then ADCFreeTextFormat else
+                error $ "invalid AttributeDomainCode: " ++ show i
+    fromDataField f = error $ "unable to decode AttributeDomainCode from:" ++ show f
 
