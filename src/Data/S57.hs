@@ -295,8 +295,36 @@ frid dr = FRID {
        frid_grup = sdRecordField dr "GRUP",
        frid_objl = sdRecordField dr "OBJL",
        frid_rver = sdRecordField dr "RVER",
-       frid_ruin = sdRecordField dr "RUIN"
+       frid_ruin = sdRecordField dr "RUIN",
+       frid_foid = foid dr,
+       frid_attfs = attfs dr,
+       frid_ffpc = ffpc dr
           }
+    where foid :: ISO8211.DataRecord -> FOID
+          foid r =
+             let dr = findSubRecord "FOID" r
+             in FOID {
+                      foid_agen = sdRecordField dr "AGEN",
+                      foid_fidn = sdRecordField dr "FIDN",
+                      foid_fids = sdRecordField dr "FIDS"
+                    }
+          ffpc :: ISO8211.DataRecord -> Maybe FFPC
+          ffpc r =
+             let dr' = findSubRecord' "FFPC" r
+             in case dr' of
+                  Nothing -> Nothing
+                  Just dr -> Just $ FFPC {
+                      ffpc_ffui = sdRecordField dr "FFUI",
+                      ffpc_ffix = sdRecordField dr "FFIX",
+                      ffpc_nfpt = sdRecordField dr "NFPT"
+                    }
+          attfs :: ISO8211.DataRecord -> [ATTF]
+          attfs = maybemdRecords "ATTF" attf
+          attf :: Map.Map String ISO8211.DataFieldT -> ATTF
+          attf dr = ATTF {
+                      attf_attl = mdRecordField "ATTL" dr,
+                      attf_atvl = mdRecordField "ATVL" dr
+                    }
 
 
 vrids :: DSPM -> ISO8211.DataFile -> [VRID]

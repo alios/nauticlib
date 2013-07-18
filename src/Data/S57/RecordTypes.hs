@@ -67,7 +67,9 @@ module Data.S57.RecordTypes (
   -- ** Feature records
   -- *** Feature record (FRID)
   FRID (..),
-
+  FOID (..),
+  ATTF (..),
+  FFPC (..),
   -- ** Spatial records
   -- *** Vector record (VRID)
   VRID (..),
@@ -291,15 +293,40 @@ data DDSC = DDSC
 
 -- | Featrure record
 data FRID = FRID {
-      frid_rcnm :: !Integer, -- ^ Record name
-      frid_rcid :: !Integer, -- ^ Record identification number
-      frid_prim :: !(Maybe GeoPrimitive), -- ^ Object geometric primitive
-      frid_grup :: !Integer, -- ^ Group
-      frid_objl :: !Integer, -- ^ Object Label/Code
-      frid_rver :: !Integer, -- ^ Record version
-      frid_ruin :: !RUIN -- ^ Record update instruction
+      frid_rcnm  :: !Integer, -- ^ Record name
+      frid_rcid  :: !Integer, -- ^ Record identification number
+      frid_prim  :: !(Maybe GeoPrimitive), -- ^ Object geometric primitive
+      frid_grup  :: !Integer, -- ^ Group
+      frid_objl  :: !Integer, -- ^ Object Label/Code
+      frid_rver  :: !Integer, -- ^ Record version
+      frid_ruin  :: !RUIN, -- ^ Record update instruction
+      frid_foid  :: !FOID, -- ^ Feature object identifier
+      frid_attfs :: !([ATTF]), -- ^ Feature attributes
+      frid_ffpc  :: !(Maybe FFPC) -- ^ Feature record to feature object pointer
 } deriving (Eq, Show)
 
+
+-- | Feature object identifier
+data FOID = FOID {
+      foid_agen :: Integer, -- ^ Producing agency
+      foid_fidn :: Integer, -- ^ Feature identification number
+      foid_fids :: Integer -- ^ Feature idendification subdivision
+} deriving (Eq, Show)
+
+
+-- | Feature attribute
+data ATTF = ATTF {
+      attf_attl :: Integer, -- ^ Attribute label/code
+      attf_atvl :: String -- ^ Attribute value
+} deriving (Eq, Show)
+
+
+-- | Feature record to feature object pointer
+data FFPC = FFPC {
+      ffpc_ffui :: RUIN, -- ^ Feature object point update instruction
+      ffpc_ffix :: Integer, -- ^ Feature object pointer index
+      ffpc_nfpt :: Integer -- ^ Number of feature object pointers
+} deriving (Eq, Show)
 
 -- | Vector record
 data VRID = VRID {
