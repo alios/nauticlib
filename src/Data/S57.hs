@@ -298,7 +298,8 @@ frid dr = FRID {
        frid_ruin = sdRecordField dr "RUIN",
        frid_foid = foid dr,
        frid_attfs = attfs dr,
-       frid_ffpc = ffpc dr
+       frid_ffpc = ffpc dr,
+       frid_ffpts = ffpts dr
           }
     where foid :: ISO8211.DataRecord -> FOID
           foid r =
@@ -324,6 +325,14 @@ frid dr = FRID {
           attf dr = ATTF {
                       attf_attl = mdRecordField "ATTL" dr,
                       attf_atvl = mdRecordField "ATVL" dr
+                    }
+          ffpts :: ISO8211.DataRecord -> [FFPT]
+          ffpts = maybemdRecords "FFPT" ffpt
+          ffpt :: Map.Map String ISO8211.DataFieldT -> FFPT
+          ffpt dr = FFPT {
+                      ffpt_lnam = mdRecordField "LNAM" dr,
+                      ffpt_rind = mdRecordField "RIND" dr,
+                      ffpt_comt = mdRecordField "COMT" dr
                     }
 
 

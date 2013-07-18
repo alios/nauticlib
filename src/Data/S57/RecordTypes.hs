@@ -70,6 +70,8 @@ module Data.S57.RecordTypes (
   FOID (..),
   ATTF (..),
   FFPC (..),
+  FFPT (..),
+
   -- ** Spatial records
   -- *** Vector record (VRID)
   VRID (..),
@@ -302,31 +304,41 @@ data FRID = FRID {
       frid_ruin  :: !RUIN, -- ^ Record update instruction
       frid_foid  :: !FOID, -- ^ Feature object identifier
       frid_attfs :: !([ATTF]), -- ^ Feature attributes
-      frid_ffpc  :: !(Maybe FFPC) -- ^ Feature record to feature object pointer
+      frid_ffpc  :: !(Maybe FFPC), -- ^ Feature record to feature object pointer
+      frid_ffpts :: !([FFPT]) -- ^ Feature Record to Feature Object Pointer
 } deriving (Eq, Show)
 
 
 -- | Feature object identifier
 data FOID = FOID {
-      foid_agen :: Integer, -- ^ Producing agency
-      foid_fidn :: Integer, -- ^ Feature identification number
-      foid_fids :: Integer -- ^ Feature idendification subdivision
+      foid_agen :: !Integer, -- ^ Producing agency
+      foid_fidn :: !Integer, -- ^ Feature identification number
+      foid_fids :: !Integer -- ^ Feature idendification subdivision
 } deriving (Eq, Show)
 
 
 -- | Feature attribute
 data ATTF = ATTF {
-      attf_attl :: Integer, -- ^ Attribute label/code
-      attf_atvl :: String -- ^ Attribute value
+      attf_attl :: !Integer, -- ^ Attribute label/code
+      attf_atvl :: !String -- ^ Attribute value
 } deriving (Eq, Show)
 
 
 -- | Feature record to feature object pointer
 data FFPC = FFPC {
-      ffpc_ffui :: RUIN, -- ^ Feature object point update instruction
-      ffpc_ffix :: Integer, -- ^ Feature object pointer index
-      ffpc_nfpt :: Integer -- ^ Number of feature object pointers
+      ffpc_ffui :: !RUIN, -- ^ Feature object point update instruction
+      ffpc_ffix :: !Integer, -- ^ Feature object pointer index
+      ffpc_nfpt :: !Integer -- ^ Number of feature object pointers
 } deriving (Eq, Show)
+
+
+-- | Feature record to feature object pointer
+data FFPT = FFPT {
+      ffpt_lnam :: !LongName, -- ^ Long Name
+      ffpt_rind :: !RelationShipIndicator, -- ^ Relationship indicator
+      ffpt_comt :: !String -- ^ Comment
+} deriving (Eq, Show)
+
 
 -- | Vector record
 data VRID = VRID {
@@ -388,6 +400,7 @@ data SG3D = SG3D {
 
 
 type Name = (Word8, Word32)
+type LongName = FOID
 
 --
 -- data types
@@ -503,6 +516,13 @@ data AttributeDomainCode
     | ADCFreeTextFormat
     deriving (Show,Eq)
 
+data RelationShipIndicator
+    = Master
+    | Slave
+    | Peer
+    | ProductSpecInd (Either Word8 String)
+    deriving (Eq, Show)
+
 --
 -- instance declarations
 --
@@ -538,6 +558,22 @@ instance DataField Name where
     fromDataField (DFByteString bs) =
         let (a,b) = BS.splitAt 1 bs
         in (BS.head a, runGet getWord32le $ BL.fromChunks [b])
+    fromDataField i = error $ "unable to decode Name Field from: " ++ show i
+
+
+instance DataField FOID where
+    fromDataField (DFByteString bs) =
+        let getter = do
+              agen <- fmap toInteger getWord16le
+              fidn <- fmap toInteger getWord32le
+              fids <- fmap toInteger getWord16le
+              return $ FOID {
+                           foid_agen = agen,
+                           foid_fidn = fidn,
+                           foid_fids = fids
+                         }
+        in runGet getter $ BL.fromChunks [bs]
+
     fromDataField i = error $ "unable to decode Name Field from: " ++ show i
 
 instance DataField EXPP where
@@ -779,3 +815,16 @@ instance DataField AttributeDomainCode where
                 error $ "invalid AttributeDomainCode: " ++ show i
     fromDataField f = error $ "unable to decode AttributeDomainCode from:" ++ show f
 
+
+instance DataField RelationShipIndicator where
+    fromDataField (DFString s) =
+        if (s == "M") then Master else
+        if (s == "S") then Slave else
+        if (s == "P") then Peer else
+            ProductSpecInd $ Right s
+    fromDataField (DFInteger i) =
+        if (i == 1) then Master else
+        if (i == 2) then Slave else
+        if (i == 3) then Peer else
+            ProductSpecInd . Left . fromInteger $ i
+    fromDataField f = error $ "unable to decode ObjectOrAttribute from:" ++ show f
