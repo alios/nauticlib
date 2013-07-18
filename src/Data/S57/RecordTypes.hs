@@ -69,8 +69,10 @@ module Data.S57.RecordTypes (
   FRID (..),
   FOID (..),
   ATTF (..),
+  NATF (..),
   FFPC (..),
   FFPT (..),
+  FSPT (..),
 
   -- ** Spatial records
   -- *** Vector record (VRID)
@@ -81,6 +83,7 @@ module Data.S57.RecordTypes (
   SGCC (..),
   SG2D (..),
   SG3D (..),
+  ARCC (..),
 
   -- * Other data types
   Name,
@@ -90,12 +93,14 @@ module Data.S57.RecordTypes (
   DataStruct (..),
   VectorRecordIdentifier (..),
   RUIN (..),
-  Orientation,
-  UsageIndicator,
-  TopologyIndicator,
-  MaskingIndicator,
-  ObjectOrAttribute,
-  TypeOfObjectOrAttribute
+  Orientation (..),
+  UsageIndicator (..),
+  TopologyIndicator (..),
+  MaskingIndicator (..),
+  ObjectOrAttribute (..),
+  TypeOfObjectOrAttribute (..),
+  ArcCurveType (..),
+  ConstructionSurface (..),
 ) where
 
 
@@ -304,8 +309,10 @@ data FRID = FRID {
       frid_ruin  :: !RUIN, -- ^ Record update instruction
       frid_foid  :: !FOID, -- ^ Feature object identifier
       frid_attfs :: !([ATTF]), -- ^ Feature attributes
+      frid_natfs :: !([NATF]), -- ^ Feature national attributes
       frid_ffpc  :: !(Maybe FFPC), -- ^ Feature record to feature object pointer
-      frid_ffpts :: !([FFPT]) -- ^ Feature Record to Feature Object Pointer
+      frid_ffpts :: !([FFPT]), -- ^ Feature Record to Feature Object Pointer
+      frid_fspts :: !([FSPT]) -- ^ Feature Record to Spatial Record Pointer
 } deriving (Eq, Show)
 
 
@@ -321,6 +328,12 @@ data FOID = FOID {
 data ATTF = ATTF {
       attf_attl :: !Integer, -- ^ Attribute label/code
       attf_atvl :: !String -- ^ Attribute value
+} deriving (Eq, Show)
+
+-- | Feature national attribute
+data NATF = NATF {
+      natf_attl :: !Integer, -- ^ Attribute label/code
+      natf_atvl :: !String -- ^ Attribute value
 } deriving (Eq, Show)
 
 
@@ -339,6 +352,14 @@ data FFPT = FFPT {
       ffpt_comt :: !String -- ^ Comment
 } deriving (Eq, Show)
 
+-- | Feature record to spatial record pointer
+data FSPT = FSPT {
+      fspt_name :: !Name, -- ^ Long Name
+      fspt_ornt :: !(Maybe Orientation), -- ^ Relationship indicator
+      fspt_usag :: !(Maybe UsageIndicator), -- ^ Comment,
+      fspt_mask :: !(Maybe MaskingIndicator) -- ^ Masking indicator
+} deriving (Eq, Show)
+
 
 -- | Vector record
 data VRID = VRID {
@@ -351,7 +372,8 @@ data VRID = VRID {
       vrid_vrpt  :: !([VRPT]), -- ^ Pointer Fields
       vrid_sgcc  :: !(Maybe SGCC), -- ^ Coordinate Control Field
       vrid_sg2ds :: !([SG2D]), -- ^ 2-D coodrinate fields
-      vrid_sg3ds :: !([SG3D])  -- ^ 3-D coodrinate (Sounding Array) fields
+      vrid_sg3ds :: !([SG3D]),  -- ^ 3-D coodrinate (Sounding Array) fields
+      vrid_arccs :: !([ARCC])  -- ^ Arc/Curve definition fields
 } deriving (Eq, Show)
 
 -- | Vector record attribute
@@ -396,6 +418,15 @@ data SG3D = SG3D {
       sg3d_ycoo :: !Double, -- ^ Coordinat in Y axis
       sg3d_xcoo :: !Double, -- ^ Coordinat in X axis
       sg3d_ve3d :: !Double -- ^ 3-D (sounding) value
+} deriving (Eq, Show)
+
+-- | Arc/Curve definition
+data ARCC = ARCC {
+      arcc_atyp :: !ArcCurveType, -- ^ Arc/Curve type
+      arcc_surf :: !ConstructionSurface, -- ^ Construction Surface
+      arcc_ordr :: !Integer, -- ^ Curve order
+      arcc_reso :: !Double, -- ^ Interpolated point resolution
+      arcc_fpmf :: !Integer -- ^ Floating point multiplication factor
 } deriving (Eq, Show)
 
 
@@ -521,6 +552,19 @@ data RelationShipIndicator
     | Slave
     | Peer
     | ProductSpecInd (Either Word8 String)
+    deriving (Eq, Show)
+
+data ArcCurveType
+    = Arc3PointCentre
+    | EllipticalArc
+    | UniformBspline
+    | PiecewiseBezier
+    | NonUniformRationalBspline
+    deriving (Eq, Show)
+
+data ConstructionSurface
+    = Ellipsoidal
+    | Planar
     deriving (Eq, Show)
 
 --
@@ -749,6 +793,9 @@ instance DataField (Maybe TopologyIndicator) where
           j -> error $ "invalid Topology Indicator: " ++ show j
     fromDataField i = error $ "unable to decode Topology Indicator from:" ++ show i
 
+
+
+
 instance DataField (Maybe MaskingIndicator) where
     fromDataField (DFString s) =
         if (s == "M") then Just MaskMask else
@@ -762,6 +809,7 @@ instance DataField (Maybe MaskingIndicator) where
           255 -> Nothing
           j -> error $ "invalid Masking Indicator: " ++ show j
     fromDataField i = error $ "unable to decode Masking Indicator from:" ++ show i
+
 
 instance DataField ObjectOrAttribute where
     fromDataField (DFString s) =
@@ -828,3 +876,35 @@ instance DataField RelationShipIndicator where
         if (i == 3) then Peer else
             ProductSpecInd . Left . fromInteger $ i
     fromDataField f = error $ "unable to decode ObjectOrAttribute from:" ++ show f
+
+
+
+instance DataField ArcCurveType where
+    fromDataField (DFString s) =
+        if (s == "C") then Arc3PointCentre else
+        if (s == "E") then EllipticalArc else
+        if (s == "U") then UniformBspline else
+        if (s == "B") then PiecewiseBezier else
+        if (s == "N") then NonUniformRationalBspline else
+                error $ "invalid ArcCurveType: " ++ show s
+    fromDataField (DFInteger i) =
+        if (i == 1) then Arc3PointCentre  else
+        if (i == 2) then EllipticalArc else
+        if (i == 3) then UniformBspline else
+        if (i == 4) then PiecewiseBezier else
+        if (i == 5) then NonUniformRationalBspline else
+                error $ "invalid ArcCurveType: " ++ show i
+    fromDataField f = error $ "unable to decode ArcCurveType from:" ++ show f
+
+
+instance DataField ConstructionSurface where
+    fromDataField (DFString s) =
+        if (s == "E") then Ellipsoidal else
+        if (s == "P") then Planar else
+                error $ "invalid ArcCurveType: " ++ show s
+    fromDataField (DFInteger i) =
+        if (i == 1) then Ellipsoidal  else
+        if (i == 2) then Planar else
+                error $ "invalid ArcCurveType: " ++ show i
+    fromDataField f = error $ "unable to decode ArcCurveType from:" ++ show f
+

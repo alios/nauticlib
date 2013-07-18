@@ -298,8 +298,10 @@ frid dr = FRID {
        frid_ruin = sdRecordField dr "RUIN",
        frid_foid = foid dr,
        frid_attfs = attfs dr,
+       frid_natfs = natfs dr,
        frid_ffpc = ffpc dr,
-       frid_ffpts = ffpts dr
+       frid_ffpts = ffpts dr,
+       frid_fspts = fspts dr
           }
     where foid :: ISO8211.DataRecord -> FOID
           foid r =
@@ -326,6 +328,13 @@ frid dr = FRID {
                       attf_attl = mdRecordField "ATTL" dr,
                       attf_atvl = mdRecordField "ATVL" dr
                     }
+          natfs :: ISO8211.DataRecord -> [NATF]
+          natfs = maybemdRecords "NATF" natf
+          natf :: Map.Map String ISO8211.DataFieldT -> NATF
+          natf dr = NATF {
+                      natf_attl = mdRecordField "ATTL" dr,
+                      natf_atvl = mdRecordField "ATVL" dr
+                    }
           ffpts :: ISO8211.DataRecord -> [FFPT]
           ffpts = maybemdRecords "FFPT" ffpt
           ffpt :: Map.Map String ISO8211.DataFieldT -> FFPT
@@ -333,6 +342,15 @@ frid dr = FRID {
                       ffpt_lnam = mdRecordField "LNAM" dr,
                       ffpt_rind = mdRecordField "RIND" dr,
                       ffpt_comt = mdRecordField "COMT" dr
+                    }
+          fspts :: ISO8211.DataRecord -> [FSPT]
+          fspts = maybemdRecords "FSPT" fspt
+          fspt :: Map.Map String ISO8211.DataFieldT -> FSPT
+          fspt dr = FSPT {
+                      fspt_name = mdRecordField "NAME" dr,
+                      fspt_ornt = mdRecordField "ORNT" dr,
+                      fspt_usag = mdRecordField "USAG" dr,
+                      fspt_mask = mdRecordField "MASK" dr
                     }
 
 
@@ -350,7 +368,8 @@ vrid dspm' dr = VRID {
              vrid_vrpt  = vrpts dr,
              vrid_sgcc  = sgcc dr,
              vrid_sg2ds = sg2ds dspm' dr,
-             vrid_sg3ds = sg3ds dspm' dr
+             vrid_sg3ds = sg3ds dspm' dr,
+             vrid_arccs = arccs dspm' dr
            }
 
 vrpc :: ISO8211.DataRecord -> Maybe VRPC
@@ -426,6 +445,21 @@ sg3d dspm' m =
            sg3d_ve3d = (fromInteger s) / somf
          }
 
+
+arccs :: DSPM -> ISO8211.DataRecord -> [ARCC]
+arccs dspm = maybemdRecords "ARCC" $ arcc dspm
+
+arcc :: DSPM -> Map.Map String ISO8211.DataFieldT -> ARCC
+arcc dspm' m =
+    let fpmf = mdRecordField "FMPF" m
+        reso = fromInteger $ mdRecordField "RESO" m
+    in ARCC {
+             arcc_atyp = mdRecordField "ATYP" m,
+             arcc_surf = mdRecordField "SURF" m,
+             arcc_ordr = mdRecordField "ORDR" m,
+             arcc_reso = reso / (fromInteger fpmf),
+             arcc_fpmf = fpmf
+           }
 
 
 
