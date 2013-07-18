@@ -54,10 +54,12 @@ module Data.S57.RecordTypes (
   -- *** Data dictionary definition (DDDF)
   DDDF (..),
   DDDR (..),
+
   -- *** Data dictionary domain (DDDI)
   DDDI (..),
   DDOM (..),
   DDRF (..),
+
   -- *** Data dictionary schema (DDSI)
   DDSI (..),
   DDSC (..),
@@ -276,9 +278,11 @@ data DDRF = DDRF {
 } deriving (Eq, Show)
 
 
-data DDSI = DDSI
- {
-} deriving (Eq, Show)
+data DDSI = DDSI {
+      ddsi_rcnm :: !String, -- ^  Record name
+      ddsi_rcid :: !Integer, -- ^ Record identification number
+      ddsi_oblb :: !Integer -- ^ Object label/code
+ } deriving (Eq, Show)
 
 data DDSC = DDSC
  {
