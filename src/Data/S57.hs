@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 module Data.S57 (
   module Data.S57.RecordTypes,
+  module Data.S57.Attributes,
   DataFileS57 (..),
   s57dataFile
 ) where
@@ -36,6 +37,7 @@ import qualified Data.ISO8211         as ISO8211
 import           Data.ISO8211.Tree
 import qualified Data.Map             as Map
 
+import           Data.S57.Attributes
 import           Data.S57.RecordTypes
 
 -- | a S-57 Datafile
@@ -59,12 +61,17 @@ data DataFileS57 = DataFileS57 {
 s57dataFile :: ISO8211.DataFile -> DataFileS57
 s57dataFile f =
     let dspm' = dspm f
+        dsid' = dsid f
+        frids' =
+            case dsid' of
+              Nothing -> []
+              Just dsid'' -> frids (dsid_dssi dsid'') f
         vrids' =
             case dspm' of
               Nothing -> []
               Just dspm'' -> vrids dspm'' f
     in DataFileS57 {
-             df_dsid = dsid f,
+             df_dsid = dsid',
              df_catds = catds f,
              df_dddfs = dddfs f,
              df_dddis = dddis f,
@@ -72,7 +79,7 @@ s57dataFile f =
              df_dspm = dspm',
              df_dsht = dsht f,
              df_dsac = dsac f,
-             df_frids = frids f,
+             df_frids = frids',
              df_vrids = vrids'
            }
 
@@ -284,11 +291,11 @@ catx m = CATX {
        }
 
 
-frids :: ISO8211.DataFile -> [FRID]
-frids df = map frid $ findRecords "FRID" df
+frids :: DSSI -> ISO8211.DataFile -> [FRID]
+frids dss df = map (frid dss) $ findRecords "FRID" df
 
-frid :: ISO8211.DataRecord -> FRID
-frid dr = FRID {
+frid :: DSSI -> ISO8211.DataRecord -> FRID
+frid dss dr = FRID {
        frid_rcnm = sdRecordField dr "RCNM",
        frid_rcid = sdRecordField dr "RCID",
        frid_prim = sdRecordField dr "PRIM",
