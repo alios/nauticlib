@@ -113,7 +113,8 @@ import           Data.Word
 import           System.Locale
 
 import           Data.ISO8211.Parser
-
+import           Data.Map             (Map)
+import           Data.S57.Attributes
 
 -- | Data set Identification field structure 'DSID'
 data DSID = DSID {
@@ -326,13 +327,13 @@ data FOID = FOID {
 
 -- | Feature attribute
 data ATTF = ATTF {
-      attf_attl :: !Integer, -- ^ Attribute label/code
-      attf_atvl :: !String -- ^ Attribute value
+      attf_attl :: !AttributeT, -- ^ Attribute label/code
+      attf_atvl :: !AttributeValue -- ^ Attribute value
 } deriving (Eq, Show)
 
 -- | Feature national attribute
 data NATF = NATF {
-      natf_attl :: !Integer, -- ^ Attribute label/code
+      natf_attl :: !AttributeT, -- ^ Attribute label/code
       natf_atvl :: !String -- ^ Attribute value
 } deriving (Eq, Show)
 

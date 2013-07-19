@@ -330,16 +330,21 @@ frid dss dr = FRID {
                     }
           attfs :: ISO8211.DataRecord -> [ATTF]
           attfs = maybemdRecords "ATTF" attf
+
           attf :: Map.Map String ISO8211.DataFieldT -> ATTF
-          attf dr = ATTF {
-                      attf_attl = mdRecordField "ATTL" dr,
-                      attf_atvl = mdRecordField "ATVL" dr
-                    }
+          attf dr =
+              let lbl = toEnum . fromInteger $ mdRecordField "ATTL" dr
+                  txt = mdRecordField "ATVL" dr
+              in ATTF {
+                       attf_attl = lbl,
+                       attf_atvl = att_ValueP lbl txt
+                     }
+
           natfs :: ISO8211.DataRecord -> [NATF]
           natfs = maybemdRecords "NATF" natf
           natf :: Map.Map String ISO8211.DataFieldT -> NATF
           natf dr = NATF {
-                      natf_attl = mdRecordField "ATTL" dr,
+                      natf_attl = toEnum . fromInteger $ mdRecordField "ATTL" dr,
                       natf_atvl = mdRecordField "ATVL" dr
                     }
           ffpts :: ISO8211.DataRecord -> [FFPT]

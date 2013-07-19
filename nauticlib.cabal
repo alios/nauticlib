@@ -64,6 +64,7 @@ library
                        old-locale,
                        containers,
                        binary,
+                       split,
                        attoparsec
   
 test-suite ISO8211Test
