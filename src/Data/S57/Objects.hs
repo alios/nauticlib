@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 module Data.S57.Objects
     ( Object (..)
     , ClassTag (..)
-    , Primitive (..)
+    , GeoPrimitive (..)
     , ObjectT (..)
     ) where
 
@@ -42,9 +42,24 @@ data ClassTag
     | Geo -- ^ Feature 'Object' which contains information which carries the descriptive characteristics of a real world entity
     | Collection -- ^ Feature 'Object' which describes the relationship between other 'Object's
 
-data Primitive =
-    Point | Line | Area
+data GeoPrimitive
+    = Point
+    | Line
+    | Area
     deriving (Eq, Show)
+
+
+class Object t where
+    obj_code :: t -> Integer
+    obj_fromCode :: Integer -> t
+    obj_class :: t -> String
+    obj_attrA :: t -> [AttributeT]
+    obj_attrB :: t -> [AttributeT]
+    obj_attrC :: t -> [AttributeT]
+    obj_classTag :: t -> ClassTag
+    obj_primitive :: t -> [GeoPrimitive]
+
+
 
 data ObjectT
     = ADMARE
@@ -225,16 +240,6 @@ data ObjectT
     | TEXTS
     deriving (Eq, Show)
 
-
-class Object t where
-    obj_code :: t -> Integer
-    obj_fromCode :: Integer -> t
-    obj_class :: t -> String
-    obj_attrA :: t -> [AttributeT]
-    obj_attrB :: t -> [AttributeT]
-    obj_attrC :: t -> [AttributeT]
-    obj_classTag :: t -> ClassTag
-    obj_primitive :: t -> [Primitive]
 
 
 instance Object ObjectT where

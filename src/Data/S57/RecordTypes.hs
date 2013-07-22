@@ -115,6 +115,7 @@ import           System.Locale
 import           Data.ISO8211.Parser
 import           Data.Map             (Map)
 import           Data.S57.Attributes
+import           Data.S57.Objects
 
 -- | Data set Identification field structure 'DSID'
 data DSID = DSID {
@@ -305,11 +306,11 @@ data FRID = FRID {
       frid_rcid  :: !Integer, -- ^ Record identification number
       frid_prim  :: !(Maybe GeoPrimitive), -- ^ Object geometric primitive
       frid_grup  :: !Integer, -- ^ Group
-      frid_objl  :: !Integer, -- ^ Object Label/Code
+      frid_objl  :: !ObjectT, -- ^ Object Label/Code
       frid_rver  :: !Integer, -- ^ Record version
       frid_ruin  :: !RUIN, -- ^ Record update instruction
       frid_foid  :: !FOID, -- ^ Feature object identifier
-      frid_attfs :: !([ATTF]), -- ^ Feature attributes
+      frid_attfs :: !(Map AttributeT AttributeValue), -- ^ Feature attributes
       frid_natfs :: !([NATF]), -- ^ Feature national attributes
       frid_ffpc  :: !(Maybe FFPC), -- ^ Feature record to feature object pointer
       frid_ffpts :: !([FFPT]), -- ^ Feature Record to Feature Object Pointer
@@ -516,13 +517,6 @@ data MaskingIndicator
     = MaskMask
     | MaskShow
     deriving (Show, Eq)
-
-data GeoPrimitive
-    = Point
-    | Line
-    | Area
-    deriving (Eq, Show)
-
 
 data ObjectOrAttribute
     = IsObject
