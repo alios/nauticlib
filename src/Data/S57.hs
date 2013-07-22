@@ -1,6 +1,3 @@
-{-# LANGUAGE EmptyDataDecls        #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 {-
 Copyright (c) 2013, Markus Barenhoff <alios@alios.org>
 All rights reserved.
@@ -476,6 +473,4 @@ arcc dspm' m =
              arcc_reso = reso / (fromInteger fpmf),
              arcc_fpmf = fpmf
            }
-
-
 
