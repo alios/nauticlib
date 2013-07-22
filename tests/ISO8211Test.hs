@@ -1,11 +1,11 @@
 module Main(main) where
 
-import qualified Data.ByteString as BS
-import Data.Attoparsec(parseOnly)
-import Text.Show.Pretty (ppShow)
+import           Data.Attoparsec  (parseOnly)
+import qualified Data.ByteString  as BS
+import           Text.Show.Pretty (ppShow)
 
-import qualified Data.S57 as S57
-import qualified Data.ISO8211 as ISO8211
+import qualified Data.ISO8211     as ISO8211
+import qualified Data.S57         as S57
 
 
 enc_root :: FilePath
@@ -21,5 +21,5 @@ main = do
  case r of
    Left err -> print err
    Right df -> do
-          let filter_map = id
+          let filter_map = S57.df_frids
           putStr . ppShow . filter_map . S57.s57dataFile $ df

@@ -53,6 +53,7 @@ library
                         Data.S57,
                         Data.S57.RecordTypes
                         Data.S57.Attributes
+                        Data.S57.Objects
 
   -- Modules included in this library but not exported.
   --other-modules:       Digimil.Util

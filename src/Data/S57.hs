@@ -1,3 +1,6 @@
+{-# LANGUAGE EmptyDataDecls        #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 {-
 Copyright (c) 2013, Markus Barenhoff <alios@alios.org>
 All rights reserved.
@@ -38,6 +41,7 @@ import           Data.ISO8211.Tree
 import qualified Data.Map             as Map
 
 import           Data.S57.Attributes
+import           Data.S57.Objects
 import           Data.S57.RecordTypes
 
 -- | a S-57 Datafile
