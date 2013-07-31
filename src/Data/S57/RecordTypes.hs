@@ -119,149 +119,149 @@ import           Data.S57.Objects
 
 -- | Data set Identification field structure 'DSID'
 data DSID = DSID {
-      dsid_rcnm :: !Word8, -- ^ Record name
-      dsid_rcid :: !Word32, -- ^ Record identification number
-      dsid_expp :: !EXPP, -- ^ Exchange purpose
-      dsid_intu :: !Integer, -- ^ Intended usage. A numeric value indicating the inteded usage for wich the data has been compiled.
-      dsid_dsnm :: !String, -- ^ Data set name
-      dsid_edtn :: !String, -- ^ Edition number
-      dsid_updn :: !String, -- ^ Update number
-      dsid_uadt :: !(Maybe Day), -- ^ Update application date
-      dsid_isdt :: !Day, -- ^ Issue date
-      dsid_sted :: !Double, -- ^ Edition number of S-57 (3.0, 3.1)
-      dsid_prsp :: !PRSP, -- ^ Product specification
-      dsid_psdn :: !String, -- ^ Product specification description. A string identifying a non standard product specification
-      dsid_pred :: !String, -- ^ Product specification edition number
-      dsid_prof :: !PROF, -- ^ Application profile identification
-      dsid_agen :: !Integer, -- ^ Producing agency
-      dsid_comt :: !String, -- ^ Comment
-      dsid_dssi :: !DSSI -- ^ Data set structure information field
+      dsid_rcnm :: Word8, -- ^ Record name
+      dsid_rcid :: Word32, -- ^ Record identification number
+      dsid_expp :: EXPP, -- ^ Exchange purpose
+      dsid_intu :: Integer, -- ^ Intended usage. A numeric value indicating the inteded usage for wich the data has been compiled.
+      dsid_dsnm :: String, -- ^ Data set name
+      dsid_edtn :: String, -- ^ Edition number
+      dsid_updn :: String, -- ^ Update number
+      dsid_uadt :: (Maybe Day), -- ^ Update application date
+      dsid_isdt :: Day, -- ^ Issue date
+      dsid_sted :: Double, -- ^ Edition number of S-57 (3.0, 3.1)
+      dsid_prsp :: PRSP, -- ^ Product specification
+      dsid_psdn :: String, -- ^ Product specification description. A string identifying a non standard product specification
+      dsid_pred :: String, -- ^ Product specification edition number
+      dsid_prof :: PROF, -- ^ Application profile identification
+      dsid_agen :: Integer, -- ^ Producing agency
+      dsid_comt :: String, -- ^ Comment
+      dsid_dssi :: DSSI -- ^ Data set structure information field
     } deriving (Eq, Show)
 
 -- | Data set structure information field 'DSSI'
 data DSSI = DSSI {
-      dssi_dstr :: !(Maybe DataStruct), -- ^ Data structure
-      dssi_aall :: !LexicalLevel, -- ^ 'ATTF' lexical level
-      dssi_nall :: !LexicalLevel, -- ^ 'NATF' lecical level
-      dssi_nomr :: !Integer, -- ^ Number of meta records
-      dssi_nocr :: !Integer, -- ^ Number of cartographic records
-      dssi_nogr :: !Integer, -- ^ Number of geo records
-      dssi_nolr :: !Integer, -- ^ Number of collection records
-      dssi_noin :: !Integer, -- ^ Number of isolated node records
-      dssi_nocn :: !Integer, -- ^ Number of connected node records
-      dssi_noed :: !Integer, -- ^ Number of edge records
-      dssi_nofa :: !Integer  -- ^ Number of face records
+      dssi_dstr :: (Maybe DataStruct), -- ^ Data structure
+      dssi_aall :: LexicalLevel, -- ^ 'ATTF' lexical level
+      dssi_nall :: LexicalLevel, -- ^ 'NATF' lecical level
+      dssi_nomr :: Integer, -- ^ Number of meta records
+      dssi_nocr :: Integer, -- ^ Number of cartographic records
+      dssi_nogr :: Integer, -- ^ Number of geo records
+      dssi_nolr :: Integer, -- ^ Number of collection records
+      dssi_noin :: Integer, -- ^ Number of isolated node records
+      dssi_nocn :: Integer, -- ^ Number of connected node records
+      dssi_noed :: Integer, -- ^ Number of edge records
+      dssi_nofa :: Integer  -- ^ Number of face records
     } deriving (Eq, Show)
 
 
 -- | Data set parameter field 'DSPM'
 data DSPM = DSPM {
-      dspm_rcnm :: !Word8, -- ^ Record name
-      dspm_rcid :: !Word32,  -- ^Record Identification number
-      dspm_hdat :: !Word8, -- ^ Horizontal geodetic datum (HORDAT)
-      dspm_vdat :: !Word8, -- ^ Vertical geodetic datum (VERDAT)
-      dspm_sdat :: !Word8, -- ^ Sounding geodetic datum (VERDAT)
-      dspm_cscl :: !Integer, -- ^ Compilation scale of data
-      dspm_duni :: !Word8,  -- ^ Units of depth measurement
-      dspm_huni :: !Word8, -- ^ Units of height measurement
-      dspm_puni :: !Word8, -- ^ Units of postitional accuracy
-      dspm_coun :: !COUN, -- ^ Coordinate Units
-      dspm_comf :: !Integer, -- ^ Coordinate muliplication factor
-      dspm_somf :: !Integer, -- ^ 3-D (sounding) multiplication factor
-      dspm_comt :: !String, -- ^ Comment
-      dspm_dspr :: !(Maybe DSPR), -- ^ Data set projection
-      dspm_dsrc :: !([DSRC]) -- ^ Data set registration control fields
+      dspm_rcnm :: Word8, -- ^ Record name
+      dspm_rcid :: Word32,  -- ^Record Identification number
+      dspm_hdat :: Word8, -- ^ Horizontal geodetic datum (HORDAT)
+      dspm_vdat :: Word8, -- ^ Vertical geodetic datum (VERDAT)
+      dspm_sdat :: Word8, -- ^ Sounding geodetic datum (VERDAT)
+      dspm_cscl :: Integer, -- ^ Compilation scale of data
+      dspm_duni :: Word8,  -- ^ Units of depth measurement
+      dspm_huni :: Word8, -- ^ Units of height measurement
+      dspm_puni :: Word8, -- ^ Units of postitional accuracy
+      dspm_coun :: COUN, -- ^ Coordinate Units
+      dspm_comf :: Integer, -- ^ Coordinate muliplication factor
+      dspm_somf :: Integer, -- ^ 3-D (sounding) multiplication factor
+      dspm_comt :: String, -- ^ Comment
+      dspm_dspr :: (Maybe DSPR), -- ^ Data set projection
+      dspm_dsrc :: ([DSRC]) -- ^ Data set registration control fields
 } deriving (Eq, Show)
 
 -- | Data set projection field (DSPR)
 data DSPR = DSPR {
-      dspr_proj :: !Word8, -- ^ Projection
-      dspr_prp1 :: !Integer, -- ^ Projection Parameter 1
-      dspr_prp2 :: !Integer, -- ^ Projection Parameter 2
-      dspr_prp3 :: !Integer, -- ^ Projection Parameter 3
-      dspr_prp4 :: !Integer, -- ^ Projection Parameter 4
-      dspr_feas :: !Double,  -- ^ False Easting
-      dspr_fnor :: !Double, -- ^ False Northing
-      dspr_fpmf :: !Integer, -- ^ Floating Point mulitiplication factor
-      dspr_comt :: !String -- ^ Comment
+      dspr_proj :: Word8, -- ^ Projection
+      dspr_prp1 :: Integer, -- ^ Projection Parameter 1
+      dspr_prp2 :: Integer, -- ^ Projection Parameter 2
+      dspr_prp3 :: Integer, -- ^ Projection Parameter 3
+      dspr_prp4 :: Integer, -- ^ Projection Parameter 4
+      dspr_feas :: Double,  -- ^ False Easting
+      dspr_fnor :: Double, -- ^ False Northing
+      dspr_fpmf :: Integer, -- ^ Floating Point mulitiplication factor
+      dspr_comt :: String -- ^ Comment
 } deriving (Eq, Show)
 
 
 -- | Data set registration conrol (DSRC)
 data DSRC = DSRC {
-      dsrc_rpid :: !Word8, -- ^ Registration point ID
-      dsrc_ryco :: !Double, -- ^ Registration point Latitude or Northing
-      dsrc_rxco :: !Double, -- ^ Registration point Longitude or Easting
-      dsrc_curp :: !COUN, -- ^ Coordinate units for registration point
-      dsrc_fpmf :: !Integer, -- ^ Floating point mulitplication factor
-      dsrc_rxvl :: !Double, -- ^ Registration point X-value
-      dsrc_ryvl :: !Double, -- ^ Registration point Y-value
-      dsrc_comt :: !String -- ^ Comment
+      dsrc_rpid :: Word8, -- ^ Registration point ID
+      dsrc_ryco :: Double, -- ^ Registration point Latitude or Northing
+      dsrc_rxco :: Double, -- ^ Registration point Longitude or Easting
+      dsrc_curp :: COUN, -- ^ Coordinate units for registration point
+      dsrc_fpmf :: Integer, -- ^ Floating point mulitplication factor
+      dsrc_rxvl :: Double, -- ^ Registration point X-value
+      dsrc_ryvl :: Double, -- ^ Registration point Y-value
+      dsrc_comt :: String -- ^ Comment
 } deriving (Eq,Show)
 
 
 
 -- | Data set history recrord (DSHT)
 data DSHT = DSHT {
-      dsht_rcnm :: !String, -- ^ Record name
-      dsht_rcid :: !Integer, -- ^ Record identification number
-      dsht_prco :: !Integer, -- ^ Agency Code
-      dsht_esdt :: !(Maybe Day), -- ^ Earliest source date
-      dsht_lsdt :: !(Maybe Day), -- ^ Latest source date
-      dsht_dcrt :: !String, -- ^ Data collection criteria
-      dsht_codt :: !(Maybe Day), -- ^ Compilation Date
-      dsht_comt :: !String -- ^ Comment
+      dsht_rcnm :: String, -- ^ Record name
+      dsht_rcid :: Integer, -- ^ Record identification number
+      dsht_prco :: Integer, -- ^ Agency Code
+      dsht_esdt :: (Maybe Day), -- ^ Earliest source date
+      dsht_lsdt :: (Maybe Day), -- ^ Latest source date
+      dsht_dcrt :: String, -- ^ Data collection criteria
+      dsht_codt :: (Maybe Day), -- ^ Compilation Date
+      dsht_comt :: String -- ^ Comment
     } deriving (Eq, Show)
 
 -- | Data set accuracy record (DSAC)
 data DSAC = DSAC {
-      dsac_rcnm :: !String, -- ^ Record name
-      dsac_rcid :: !Integer, -- ^ Record identification number
-      dsac_pacc :: !Double, -- ^ Absolute positional accuracy
-      dsac_hacc :: !Double, -- ^ Absolute horizontal/vertical measurement accuracy
-      dsac_sacc :: !Double, -- ^ Absolute sounding accuracy
-      dsac_fpmf :: !Integer, -- ^ Floating point multiplication factor
-      dsac_comt :: !String -- ^ Comment
+      dsac_rcnm :: String, -- ^ Record name
+      dsac_rcid :: Integer, -- ^ Record identification number
+      dsac_pacc :: Double, -- ^ Absolute positional accuracy
+      dsac_hacc :: Double, -- ^ Absolute horizontal/vertical measurement accuracy
+      dsac_sacc :: Double, -- ^ Absolute sounding accuracy
+      dsac_fpmf :: Integer, -- ^ Floating point multiplication factor
+      dsac_comt :: String -- ^ Comment
     } deriving (Eq, Show)
 
 -- | Catalogue directory record (CATD)
 data CATD = CATD {
-      catd_rcnm  :: !String, -- ^  Record name
-      catd_rcid  :: !Integer, -- ^ Record identification number
-      catd_file  :: !String, -- ^  File name
-      catd_lfil  :: !String, -- ^  File long name
-      catd_volm  :: !String, -- ^  Volume
-      catd_impl  :: !String, -- ^  Implementation
-      catd_slat  :: !Double, -- ^  Souternmost Latitude
-      catd_wlon  :: !Double, -- ^  Westernmost Longitude
-      catd_nlat  :: !Double, -- ^  Nothermost Latitude
-      catd_elon  :: !Double, -- ^  Easternmost Longitude
-      catd_crcs  :: !String, -- ^  CRC
-      catd_comt  :: !String, -- ^  Comment
+      catd_rcnm  :: String, -- ^  Record name
+      catd_rcid  :: Integer, -- ^ Record identification number
+      catd_file  :: String, -- ^  File name
+      catd_lfil  :: String, -- ^  File long name
+      catd_volm  :: String, -- ^  Volume
+      catd_impl  :: String, -- ^  Implementation
+      catd_slat  :: Double, -- ^  Souternmost Latitude
+      catd_wlon  :: Double, -- ^  Westernmost Longitude
+      catd_nlat  :: Double, -- ^  Nothermost Latitude
+      catd_elon  :: Double, -- ^  Easternmost Longitude
+      catd_crcs  :: String, -- ^  CRC
+      catd_comt  :: String, -- ^  Comment
       catd_catxs :: [CATX]
 } deriving (Eq, Show)
 
 -- | Catalogue cross refernce record (CATX)
 data CATX = CATX  {
-      catx_rcnm :: !String, -- ^ Record name
-      catx_rcid :: !Integer, -- ^ Record identification Number
-      catx_nam1 :: !Name, -- ^ Name 1
-      catx_nam2 :: !Name, -- ^ Name 2
-      catx_comt :: !String -- ^ Comment
+      catx_rcnm :: String, -- ^ Record name
+      catx_rcid :: Integer, -- ^ Record identification Number
+      catx_nam1 :: Name, -- ^ Name 1
+      catx_nam2 :: Name, -- ^ Name 2
+      catx_comt :: String -- ^ Comment
 } deriving (Eq, Show)
 
 
 data DDDF = DDDF {
-      dddf_rcnm :: !String, -- ^  Record name
-      dddf_rcid :: !Integer, -- ^ Record identification number
-      dddf_oora :: !ObjectOrAttribute, -- ^ Object or attribute
-      dddf_oaac :: !String, -- ^ Object or attribute acronym
-      dddf_oaco :: !Integer, -- ^ Object or attribute label/code
-      dddf_oall :: !String, -- ^ Object or attribute label
-      dddf_oaty :: !TypeOfObjectOrAttribute, -- ^ Type of object or attribute
-      dddf_defn :: !String, -- ^ Definition
-      dddf_auth :: !Integer, -- ^ Autorizing agency
-      dddf_comt :: !String -- ^ Comment
+      dddf_rcnm :: String, -- ^  Record name
+      dddf_rcid :: Integer, -- ^ Record identification number
+      dddf_oora :: ObjectOrAttribute, -- ^ Object or attribute
+      dddf_oaac :: String, -- ^ Object or attribute acronym
+      dddf_oaco :: Integer, -- ^ Object or attribute label/code
+      dddf_oall :: String, -- ^ Object or attribute label
+      dddf_oaty :: TypeOfObjectOrAttribute, -- ^ Type of object or attribute
+      dddf_defn :: String, -- ^ Definition
+      dddf_auth :: Integer, -- ^ Autorizing agency
+      dddf_comt :: String -- ^ Comment
 } deriving (Eq, Show)
 
 
@@ -270,14 +270,14 @@ data DDDR = DDDR {
 
 
 data DDDI = DDDI {
-      dddi_rcnm :: !String, -- ^  Record name
-      dddi_rcid :: !Integer, -- ^ Record identification number
-      dddi_atlb :: !Integer, -- ^ Attribute label/code
-      dddi_atdo :: !AttributeDomainCode, -- ^ Attribute domain code
-      dddi_admu :: !String, -- ^ Attribute domain value measurement unit
-      dddi_adft :: !String, -- ^ Attribute domain format
-      dddi_auth :: !Integer, -- ^ Autorizing agency
-      dddi_comt :: !String -- ^ Comment
+      dddi_rcnm :: String, -- ^  Record name
+      dddi_rcid :: Integer, -- ^ Record identification number
+      dddi_atlb :: Integer, -- ^ Attribute label/code
+      dddi_atdo :: AttributeDomainCode, -- ^ Attribute domain code
+      dddi_admu :: String, -- ^ Attribute domain value measurement unit
+      dddi_adft :: String, -- ^ Attribute domain format
+      dddi_auth :: Integer, -- ^ Autorizing agency
+      dddi_comt :: String -- ^ Comment
 } deriving (Eq, Show)
 
 
@@ -290,9 +290,9 @@ data DDRF = DDRF {
 
 
 data DDSI = DDSI {
-      ddsi_rcnm :: !String, -- ^  Record name
-      ddsi_rcid :: !Integer, -- ^ Record identification number
-      ddsi_oblb :: !Integer -- ^ Object label/code
+      ddsi_rcnm :: String, -- ^  Record name
+      ddsi_rcid :: Integer, -- ^ Record identification number
+      ddsi_oblb :: Integer -- ^ Object label/code
  } deriving (Eq, Show)
 
 data DDSC = DDSC
@@ -302,133 +302,133 @@ data DDSC = DDSC
 
 -- | Featrure record
 data FRID = FRID {
-      frid_rcnm  :: !Integer, -- ^ Record name
-      frid_rcid  :: !Integer, -- ^ Record identification number
-      frid_prim  :: !(Maybe GeoPrimitive), -- ^ Object geometric primitive
-      frid_grup  :: !Integer, -- ^ Group
-      frid_objl  :: !ObjectT, -- ^ Object Label/Code
-      frid_rver  :: !Integer, -- ^ Record version
-      frid_ruin  :: !RUIN, -- ^ Record update instruction
-      frid_foid  :: !FOID, -- ^ Feature object identifier
-      frid_attfs :: !(Map AttributeT AttributeValue), -- ^ Feature attributes
-      frid_natfs :: !([NATF]), -- ^ Feature national attributes
-      frid_ffpc  :: !(Maybe FFPC), -- ^ Feature record to feature object pointer
-      frid_ffpts :: !([FFPT]), -- ^ Feature Record to Feature Object Pointer
-      frid_fspts :: !([FSPT]) -- ^ Feature Record to Spatial Record Pointer
+      frid_rcnm  :: Integer, -- ^ Record name
+      frid_rcid  :: Integer, -- ^ Record identification number
+      frid_prim  :: (Maybe GeoPrimitive), -- ^ Object geometric primitive
+      frid_grup  :: Integer, -- ^ Group
+      frid_objl  :: ObjectT, -- ^ Object Label/Code
+      frid_rver  :: Integer, -- ^ Record version
+      frid_ruin  :: RUIN, -- ^ Record update instruction
+      frid_foid  :: (Maybe FOID), -- ^ Feature object identifier
+      frid_attfs :: (Map AttributeT AttributeValue), -- ^ Feature attributes
+      frid_natfs :: ([NATF]), -- ^ Feature national attributes
+      frid_ffpc  :: (Maybe FFPC), -- ^ Feature record to feature object pointer
+      frid_ffpts :: ([FFPT]), -- ^ Feature Record to Feature Object Pointer
+      frid_fspts :: ([FSPT]) -- ^ Feature Record to Spatial Record Pointer
 } deriving (Eq, Show)
 
 
 -- | Feature object identifier
 data FOID = FOID {
-      foid_agen :: !Integer, -- ^ Producing agency
-      foid_fidn :: !Integer, -- ^ Feature identification number
-      foid_fids :: !Integer -- ^ Feature idendification subdivision
+      foid_agen :: Integer, -- ^ Producing agency
+      foid_fidn :: Integer, -- ^ Feature identification number
+      foid_fids :: Integer -- ^ Feature idendification subdivision
 } deriving (Eq, Show)
 
 
 -- | Feature attribute
 data ATTF = ATTF {
-      attf_attl :: !AttributeT, -- ^ Attribute label/code
-      attf_atvl :: !AttributeValue -- ^ Attribute value
+      attf_attl :: AttributeT, -- ^ Attribute label/code
+      attf_atvl :: AttributeValue -- ^ Attribute value
 } deriving (Eq, Show)
 
 -- | Feature national attribute
 data NATF = NATF {
-      natf_attl :: !AttributeT, -- ^ Attribute label/code
-      natf_atvl :: !String -- ^ Attribute value
+      natf_attl :: AttributeT, -- ^ Attribute label/code
+      natf_atvl :: String -- ^ Attribute value
 } deriving (Eq, Show)
 
 
 -- | Feature record to feature object pointer
 data FFPC = FFPC {
-      ffpc_ffui :: !RUIN, -- ^ Feature object point update instruction
-      ffpc_ffix :: !Integer, -- ^ Feature object pointer index
-      ffpc_nfpt :: !Integer -- ^ Number of feature object pointers
+      ffpc_ffui :: RUIN, -- ^ Feature object point update instruction
+      ffpc_ffix :: Integer, -- ^ Feature object pointer index
+      ffpc_nfpt :: Integer -- ^ Number of feature object pointers
 } deriving (Eq, Show)
 
 
 -- | Feature record to feature object pointer
 data FFPT = FFPT {
-      ffpt_lnam :: !LongName, -- ^ Long Name
-      ffpt_rind :: !RelationShipIndicator, -- ^ Relationship indicator
-      ffpt_comt :: !String -- ^ Comment
+      ffpt_lnam :: LongName, -- ^ Long Name
+      ffpt_rind :: RelationShipIndicator, -- ^ Relationship indicator
+      ffpt_comt :: String -- ^ Comment
 } deriving (Eq, Show)
 
 -- | Feature record to spatial record pointer
 data FSPT = FSPT {
-      fspt_name :: !Name, -- ^ Long Name
-      fspt_ornt :: !(Maybe Orientation), -- ^ Relationship indicator
-      fspt_usag :: !(Maybe UsageIndicator), -- ^ Comment,
-      fspt_mask :: !(Maybe MaskingIndicator) -- ^ Masking indicator
+      fspt_name :: Name, -- ^ Long Name
+      fspt_ornt :: (Maybe Orientation), -- ^ Relationship indicator
+      fspt_usag :: (Maybe UsageIndicator), -- ^ Comment,
+      fspt_mask :: (Maybe MaskingIndicator) -- ^ Masking indicator
 } deriving (Eq, Show)
 
 
 -- | Vector record
 data VRID = VRID {
-      vrid_rcnm  :: !VectorRecordIdentifier, -- ^ Record name
-      vrid_rcid  :: !Word32, -- ^ Record identification number
-      vrid_rver  :: !Integer, -- ^ Record version
-      vrid_ruin  :: !RUIN, -- ^ Record update instruction
-      vrid_attvs :: !([ATTV]), -- ^ Attribute Fields
-      vrid_vrpc  :: !(Maybe VRPC), -- ^ Pointer Control Field
-      vrid_vrpt  :: !([VRPT]), -- ^ Pointer Fields
-      vrid_sgcc  :: !(Maybe SGCC), -- ^ Coordinate Control Field
-      vrid_sg2ds :: !([SG2D]), -- ^ 2-D coodrinate fields
-      vrid_sg3ds :: !([SG3D]),  -- ^ 3-D coodrinate (Sounding Array) fields
-      vrid_arccs :: !([ARCC])  -- ^ Arc/Curve definition fields
+      vrid_rcnm  :: VectorRecordIdentifier, -- ^ Record name
+      vrid_rcid  :: Word32, -- ^ Record identification number
+      vrid_rver  :: Integer, -- ^ Record version
+      vrid_ruin  :: RUIN, -- ^ Record update instruction
+      vrid_attvs :: ([ATTV]), -- ^ Attribute Fields
+      vrid_vrpc  :: (Maybe VRPC), -- ^ Pointer Control Field
+      vrid_vrpt  :: ([VRPT]), -- ^ Pointer Fields
+      vrid_sgcc  :: (Maybe SGCC), -- ^ Coordinate Control Field
+      vrid_sg2ds :: ([SG2D]), -- ^ 2-D coodrinate fields
+      vrid_sg3ds :: ([SG3D]),  -- ^ 3-D coodrinate (Sounding Array) fields
+      vrid_arccs :: ([ARCC])  -- ^ Arc/Curve definition fields
 } deriving (Eq, Show)
 
 -- | Vector record attribute
 data ATTV = ATTV {
-      attv_attl :: !Integer, -- ^ Attribute label/code
-      attv_atvl :: !String -- ^ Attribute value
+      attv_attl :: Integer, -- ^ Attribute label/code
+      attv_atvl :: String -- ^ Attribute value
     } deriving (Eq, Show)
 
 -- | Vector record pointer control
 data VRPC = VRPC {
-      vrpc_vpui :: !RUIN, -- ^ Vector record pointer update instruction
-      vrpc_vpix :: !Integer, -- ^ Vector record pointer index
-      vrpc_nvpt :: !Integer -- ^ Number of record pointers
+      vrpc_vpui :: RUIN, -- ^ Vector record pointer update instruction
+      vrpc_vpix :: Integer, -- ^ Vector record pointer index
+      vrpc_nvpt :: Integer -- ^ Number of record pointers
     } deriving (Eq, Show)
 
 
 -- | Vector record pointer
 data VRPT = VRPT {
-      vrpt_name :: !Name, -- ^ Name
-      vrpt_ornt :: !(Maybe Orientation), -- ^ Orientation
-      vrpt_usag :: !(Maybe UsageIndicator), -- ^ Usage indicator
-      vrpt_topi :: !(Maybe TopologyIndicator), -- ^ Topology indicator
-      vrpt_mask :: !(Maybe MaskingIndicator)  -- ^ Masking indicator
+      vrpt_name :: Name, -- ^ Name
+      vrpt_ornt :: (Maybe Orientation), -- ^ Orientation
+      vrpt_usag :: (Maybe UsageIndicator), -- ^ Usage indicator
+      vrpt_topi :: (Maybe TopologyIndicator), -- ^ Topology indicator
+      vrpt_mask :: (Maybe MaskingIndicator)  -- ^ Masking indicator
     } deriving (Eq, Show)
 
 
 -- | Coordinate control field
 data SGCC = SGCC {
-      sgcc_ccui :: !RUIN, -- ^ Coordinate update instruction
-      sgcc_ccix :: !Integer, -- ^ Coordinate index
-      sgcc_ccnc :: !Integer -- ^ Number of coordinates
+      sgcc_ccui :: RUIN, -- ^ Coordinate update instruction
+      sgcc_ccix :: Integer, -- ^ Coordinate index
+      sgcc_ccnc :: Integer -- ^ Number of coordinates
 } deriving (Eq, Show)
 
 -- | 2-D coodrinate fields
 data SG2D = SG2D {
-      sg2d_ycoo :: !Double, -- ^ Coordinat in Y axis
-      sg2d_xcoo :: !Double  -- ^ Coordinat in X axis
+      sg2d_ycoo :: Double, -- ^ Coordinat in Y axis
+      sg2d_xcoo :: Double  -- ^ Coordinat in X axis
 } deriving (Eq, Show)
 
 -- | 3-D coodrinate (Sounding Array) fields
 data SG3D = SG3D {
-      sg3d_ycoo :: !Double, -- ^ Coordinat in Y axis
-      sg3d_xcoo :: !Double, -- ^ Coordinat in X axis
-      sg3d_ve3d :: !Double -- ^ 3-D (sounding) value
+      sg3d_ycoo :: Double, -- ^ Coordinat in Y axis
+      sg3d_xcoo :: Double, -- ^ Coordinat in X axis
+      sg3d_ve3d :: Double -- ^ 3-D (sounding) value
 } deriving (Eq, Show)
 
 -- | Arc/Curve definition
 data ARCC = ARCC {
-      arcc_atyp :: !ArcCurveType, -- ^ Arc/Curve type
-      arcc_surf :: !ConstructionSurface, -- ^ Construction Surface
-      arcc_ordr :: !Integer, -- ^ Curve order
-      arcc_reso :: !Double, -- ^ Interpolated point resolution
-      arcc_fpmf :: !Integer -- ^ Floating point multiplication factor
+      arcc_atyp :: ArcCurveType, -- ^ Arc/Curve type
+      arcc_surf :: ConstructionSurface, -- ^ Construction Surface
+      arcc_ordr :: Integer, -- ^ Curve order
+      arcc_reso :: Double, -- ^ Interpolated point resolution
+      arcc_fpmf :: Integer -- ^ Floating point multiplication factor
 } deriving (Eq, Show)
 
 

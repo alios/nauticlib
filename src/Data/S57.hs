@@ -311,14 +311,17 @@ frid dss dr = FRID {
        frid_ffpts = ffpts dr,
        frid_fspts = fspts dr
           }
-    where foid :: ISO8211.DataRecord -> FOID
+    where foid :: ISO8211.DataRecord -> Maybe FOID
           foid r =
-             let dr = findSubRecord "FOID" r
-             in FOID {
-                      foid_agen = sdRecordField dr "AGEN",
-                      foid_fidn = sdRecordField dr "FIDN",
-                      foid_fids = sdRecordField dr "FIDS"
-                    }
+             let dr' = findSubRecord' "FOID" r
+             in case dr' of
+                  Nothing -> Nothing
+                  Just dr -> Just $
+                      FOID {
+                           foid_agen = sdRecordField dr "AGEN",
+                           foid_fidn = sdRecordField dr "FIDN",
+                           foid_fids = sdRecordField dr "FIDS"
+                         }
           ffpc :: ISO8211.DataRecord -> Maybe FFPC
           ffpc r =
              let dr' = findSubRecord' "FFPC" r

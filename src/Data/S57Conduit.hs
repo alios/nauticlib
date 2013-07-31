@@ -1,5 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE Rank2Types        #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE Rank2Types                #-}
 
 {-
 Copyright (c) 2013, Markus Barenhoff <alios@alios.org>
@@ -29,25 +30,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -}
 
-module Data.S57Conduit (
-) where
+module Data.S57Conduit
+    ( dataFile
+    , dataFileIO
+    ) where
 
 
 
 import           Codec.Archive.Zip
+import           Data.ByteString         (ByteString)
 import           Data.Conduit
 import           Data.Conduit.Attoparsec
 import           Data.Conduit.Filesystem
+import qualified Data.Conduit.List       as CL
+import qualified Data.ISO8211.Parser     as ISO8211
 import           Data.S57
-import qualified Data.Text               as T
 import           Filesystem.Path
 import           Prelude                 hiding (FilePath)
 
-type S57DataSet = ()
-type S57DataFile = ()
+--type S57DataSet = ISO8211.DataFile
+--type S57DataFile = ISO8211.DataFile
 
 
-s57dataSetProducer :: (Monad m) => FilePath -> Producer m S57DataSet
+
+dsidConduit :: (Monad m) => Conduit (ISO8211.DataFile) m DSID
+dsidConduit = awaitForever $ \df -> do
+  dsidConduit
+
+{-
+s57dataSetProducer :: (MonadResource m) => FilePath -> Consumer m S57DataSet
 s57dataSetProducer fp =
     case (extension fp) of
       Nothing -> s57dataSetDirConduit fp
@@ -55,13 +66,44 @@ s57dataSetProducer fp =
       Just e ->
           fail $ "s57dataSetProducer: unknown extension " ++ show e ++ " in " ++ show fp
 
-
-s57dataSetDirConduit :: FilePath -> Producer m S57DataSet
-s57dataSetDirConduit fp = undefined
+-}
 
 
-s57dataSetZipConduit :: FilePath -> Producer m S57DataSet
+dataFile :: MonadResource m => FilePath -> m DataFileS57
+dataFile fp = fmap s57dataFile $ sourceFile fp $$ dataFileConsumer
+
+dataFileIO :: FilePath -> IO DataFileS57
+dataFileIO = runResourceT . dataFile
+
+dataFileConsumer :: (MonadThrow m) => Consumer ByteString m (ISO8211.DataFile)
+dataFileConsumer = sinkParser $ ISO8211.parseDataFile
+
+catalogFilename :: FilePath -> FilePath
+catalogFilename dir = dir </> encRootName </> catalogName
+    where encRootName = "ENC_ROOT"
+          catalogName = "CATALOG.031"
+
+{-
+dataSet d = do
+  cat <- dataFile $ catalogFilename d
+  liftIO $ print cat
+-}
+
+tfp :: FilePath
+tfp = "/home/alios/src/nauticlib/test_data/"
+
+--t = runResourceT $ dataSet tfp
+
+
+{-
+s57dataSetDirConduit :: (MonadResource m) => FilePath -> Consumer m S57DataSet
+s57dataSetDirConduit fp = do
+  catalog <- (sourceFile $ catalogFilename fp) $$ dataFileConsumer
+  liftIO $ print catalog
+  return undefined
+
+s57dataSetZipConduit :: (MonadResource m) => FilePath -> Consumer m S57DataSet
 s57dataSetZipConduit fp = undefined
-
+-}
 
 

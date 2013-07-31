@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -}
 
-module Data.Symbols where
+module Graphics.Nauticlib where
 
 
 import qualified Data.ByteString.Lazy        as BL
@@ -59,10 +59,12 @@ class (Show c) => Symbol c where
     symId = show
     symSvg s =
         let (px,py) = symPivotPoint s
+            (bx,by) = symBoundingBox s
             tr = S.translate (-px) (-py)
         in (S.g ! A.transform tr
                 ! A.id_ (S.toValue . symId  $ s)
-                ! A.preserveaspectratio "xMinYMin"
+                ! A.width (S.toValue $ show bx ++ "mm")
+                ! A.height (S.toValue $ show by ++ "mm")
            ) $ symSvg_ s
     symSvg_ :: c -> Svg
 
@@ -120,11 +122,23 @@ instance Symbol ACHARE51 where
                            S.lr 0 1.12
                            S.lr (-3.18) 0
                            S.lr 0 (by - (1.79 + 1.12 + 3.29) )
+
+                           S.l (bx - 4)  (by - 1.79)
+
                            S.l (bx - 1.12) (by - 3.66)
-                           S.lr 1.12 0
+                           S.lr 1.5 0
+
+                           S.lr (-2) (3.66 - 1.79)
+
                            S.l (bx / 2) by
+
+                           S.l 2 (by - 1.79)
+
                            S.l 0 (by - 3.66)
-                           S.lr 1.12 0
+                           S.lr 1.5 0
+
+                           S.l 4 (by - 1.79)
+
                            S.l ((bx / 2) - (swx / 2)) (by - 1.79)
                            S.lr 0 (negate $ by - (1.79 + 1.12 + 3.29))
                            S.lr (-3.18) 0
@@ -218,25 +232,24 @@ instance Symbol ACHRES71 where
     symSvg_ s = S.g $ do
       let (ax, ay) = symPivotPoint ACHRES51
       S.use ! A.x (S.toValue $ ax + 1.88) ! A.y (S.toValue ay) ! symUseRef ACHRES51
-      S.g ! A.stroke (lookupColor CHMFG)
-          ! A.fill (lookupColor CHMFG)
-          ! A.strokeLinecap "round" $ do
-                           S.line
-                            ! A.strokeWidth "0.3"
-                            ! A.x1 (S.toValue mx)
-                            ! A.y1 (S.toValue my)
-                            ! A.x2 (S.toValue mx)
-                            ! A.y2 (S.toValue (my - 3.46))
-                           S.circle
-                            ! A.strokeWidth "0.3"
-                            ! A.cx (S.toValue mx)
-                            ! A.cy (S.toValue $ by - 0.3)
-                            ! A.r "0.3"
+
+      S.path ! A.stroke (lookupColor CHMFG)
+             ! A.fillOpacity "0"
+             ! A.strokeWidth "0.3"
+             ! A.strokeLinecap "round"
+             ! A.d infoi
+
         where (bx,by) = symBoundingBox s
               mx = ((bx / 2) + 7.69)
               my = by - 1.34
-
-
+              infoi = mkPath $ do
+                        S.m 0 by
+                        S.lr 1.88 0
+                        S.m (1.88 / 2) by
+                        S.lr 0 (-2.5)
+                        S.lr ((-1.88) / 2) 0
+                        S.m 0.5 (by - 3)
+                        S.lr (-0.25) (-0.54)
 
 
 defs = S.toMarkup
