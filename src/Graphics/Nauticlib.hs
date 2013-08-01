@@ -32,22 +32,17 @@ module Graphics.Nauticlib where
 
 
 import qualified Data.ByteString.Lazy        as BL
-import           Text.Blaze.Renderer.Pretty  (renderMarkup)
+import           Data.String
+import qualified Data.Text                   as T
+import qualified Data.Text.Lazy.Builder      as T
+import qualified Data.Text.Lazy.Encoding     as T
+import           System.FilePath
+import           Text.Blaze.Internal
+import           Text.Blaze.Renderer.Utf8    (renderMarkup)
 import           Text.Blaze.Svg11            (Svg, l, m, mkPath, (!))
 import qualified Text.Blaze.Svg11            as S
 import qualified Text.Blaze.Svg11.Attributes as A
-
-data SymbolColor = CHMGD
-                 | CHMFG
-                 deriving (Eq)
-
-colorLAT =
-    [ (CHMGD, "plum")
-    , (CHMFG, "darkmagenta")
-    ]
-
-lookupColor' k = lookup k colorLAT
-lookupColor = maybe (error "unknown color") id . lookupColor'
+import           Text.CSS.Render
 
 class (Show c) => Symbol c where
     symPivotPoint  :: c -> (Double, Double)
@@ -63,6 +58,7 @@ class (Show c) => Symbol c where
             tr = S.translate (-px) (-py)
         in (S.g ! A.transform tr
                 ! A.id_ (S.toValue . symId  $ s)
+                ! A.class_ (S.toValue $ symId s)
                 ! A.width (S.toValue $ show bx ++ "mm")
                 ! A.height (S.toValue $ show by ++ "mm")
            ) $ symSvg_ s
@@ -76,13 +72,14 @@ data ACHRES61 = ACHRES61 deriving (Show, Eq)
 data ACHRES71 = ACHRES71 deriving (Show, Eq)
 
 
+
 instance Symbol ACHARE02 where
     symPivotPoint  _ = (2.06, 2.63)
     symBoundingBox _ = (4.02, 5.03)
     symSvg_ s =
         S.path
              ! A.fillOpacity "0"
-             ! A.stroke (lookupColor CHMFG)
+             ! A.class_ (lookupColorClass CHMFG)
              ! A.strokeWidth "0.3"
              ! A.strokeLinecap "round"
              ! A.d anchor
@@ -108,7 +105,7 @@ instance Symbol ACHARE51 where
     symSvg_ s =
         S.path
              ! A.fillOpacity "0"
-             ! A.stroke (lookupColor CHMGD)
+             ! A.class_ (lookupColorClass CHMGD)
              ! A.strokeWidth "0.3"
              ! A.d anchor
         where (bx,by) = symBoundingBox s
@@ -153,7 +150,7 @@ instance Symbol ACHBRT07 where
     symPivotPoint  _ = (2.54, 2.79)
     symBoundingBox _ = (5.06, 5.06)
     symSvg_ s = S.g
-             ! A.stroke (lookupColor CHMFG)
+             ! A.class_ (lookupColorClass CHMFG)
              ! A.strokeWidth "0.3"
              ! A.strokeLinecap "round"
              ! A.fillOpacity "0"
@@ -192,7 +189,7 @@ instance Symbol ACHRES51 where
       symSvg_ ACHARE51
       S.line
            ! A.fillOpacity "0"
-           ! A.stroke (lookupColor CHMGD)
+           ! A.class_ (lookupColorClass CHMGD)
            ! A.strokeWidth "0.9"
            ! A.strokeLinecap "round"
            ! A.x1 "0.80"
@@ -208,8 +205,7 @@ instance Symbol ACHRES61 where
     symSvg_ s = S.g $ do
       let (ax, ay) = symPivotPoint ACHRES51
       S.use ! A.x (S.toValue ax) ! A.y (S.toValue ay) ! symUseRef ACHRES51
-      S.g ! A.stroke (lookupColor CHMFG)
-          ! A.fill (lookupColor CHMFG)
+      S.g ! A.class_ (lookupColorClass CHMFG)
           ! A.strokeLinecap "round" $ do
                            S.line
                             ! A.strokeWidth "0.3"
@@ -233,7 +229,7 @@ instance Symbol ACHRES71 where
       let (ax, ay) = symPivotPoint ACHRES51
       S.use ! A.x (S.toValue $ ax + 1.88) ! A.y (S.toValue ay) ! symUseRef ACHRES51
 
-      S.path ! A.stroke (lookupColor CHMFG)
+      S.path ! A.class_ (lookupColorClass CHMFG)
              ! A.fillOpacity "0"
              ! A.strokeWidth "0.3"
              ! A.strokeLinecap "round"
@@ -261,13 +257,60 @@ defs = S.toMarkup
        , symSvg ACHRES71 ]
 
 
-x = S.toMarkup defs
+docTypeCSS :: T.Text -> Svg
+docTypeCSS c = do
+  preEscapedText "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+  xmlstylesheetcss c
+  preEscapedText "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"\n    \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"
 
-ts = writeFile "/home/alios/tmp/test.svg" $ renderMarkup svgDoc
+xmlstylesheet t h =
+    preEscapedText $ T.concat [
+                        "<?xml-stylesheet href=\"", h, "\" type=\"", t, "\"?>"]
+xmlstylesheetcss = xmlstylesheet "text/css"
 
-svgDoc :: S.Svg
-svgDoc = do
-  S.docTypeSvg
+
+docTypeSvgCSS :: T.Text -> Svg -> Svg
+docTypeSvgCSS c inner =
+    docTypeCSS c >> (S.svg
+      ! attribute "xmlns" " xmlns=\"" "http://www.w3.org/2000/svg"
+      ! attribute "xmlns:xlink" " xmlns:xlink=\"" "http://www.w3.org/1999/xlink"  $ inner)
+
+
+
+
+ts = renderdocs "/home/alios/tmp/" "test"
+
+renderdocs :: FilePath -> String -> IO ()
+renderdocs d f = do
+  let wFile e = BL.writeFile $ d </> (f `addExtension` e)
+  wFile "svg" $ renderMarkup $ svgDoc (f `addExtension` "css")
+  wFile "css" $ cssDoc
+
+
+data SymbolColor = CHMGD
+                 | CHMFG
+                 deriving (Eq, Show)
+
+lookupColorClass = S.toValue . show
+
+
+cssDoc :: BL.ByteString
+cssDoc =
+    T.encodeUtf8 . T.toLazyText $ renderBlocks
+    [ ( ".CHMGD", [("stroke", "plum")
+                  ,("fill", "plum")
+                  ])
+    , ( ".CHMFG", [("stroke", "darkmagenta")
+                  ,("fill", "darkmagenta")
+                  ])
+    ]
+
+
+
+
+svgDoc :: String -> Svg
+svgDoc f = do
+  docTypeSvgCSS (fromString f)
        ! A.version "1.1"
        ! A.width "800"
        ! A.height "800"
