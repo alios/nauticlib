@@ -44,12 +44,17 @@ import qualified Text.Blaze.Svg11            as S
 import qualified Text.Blaze.Svg11.Attributes as A
 import           Text.CSS.Render
 
+
+
+
 class (Show c) => Symbol c where
     symPivotPoint  :: c -> (Double, Double)
     symBoundingBox :: c -> (Double, Double)
     symSvg :: c -> Svg
     symUseRef :: c -> S.Attribute
     symUseRef s = A.xlinkHref (S.toValue $ "#" ++ symId s)
+    symUse :: c -> Double -> Double -> Svg
+    symUse s x y = S.use ! A.x (S.toValue x) ! A.y (S.toValue y) ! symUseRef s
     symId :: c -> String
     symId = show
     symSvg s =
@@ -306,21 +311,17 @@ cssDoc =
     ]
 
 
-
-
 svgDoc :: String -> Svg
 svgDoc f = do
   docTypeSvgCSS (fromString f)
        ! A.version "1.1"
        ! A.width "800"
-       ! A.height "800"
-       ! A.viewbox "0 0 150 100" $ do
+       ! A.height "600"
+       ! A.viewbox "-100 -100 800 600" $ do
            S.defs defs
-           S.use ! A.x "0"   ! A.y "0" ! symUseRef ACHRES71
-           S.use ! A.x "20"  ! A.y "0" ! symUseRef ACHRES61
-           S.use ! A.x "40"  ! A.y "0" ! symUseRef ACHRES51
-           S.use ! A.x "70"  ! A.y "15" ! symUseRef ACHBRT07
-           S.use ! A.x "90"  ! A.y "15" ! symUseRef ACHARE51
-           S.use ! A.x "100"  ! A.y "15" ! symUseRef ACHARE02
-
-
+           symUse ACHRES71 0 0
+           symUse ACHRES61 20 0
+           symUse ACHRES51 40 0
+           symUse ACHBRT07 70 0
+           symUse ACHARE51 90 0
+           symUse ACHARE02 110 0
