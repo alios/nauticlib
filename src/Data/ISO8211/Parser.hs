@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable   #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
@@ -55,8 +56,10 @@ import           Data.Tree
 
 import           Data.Attoparsec                  as P
 import qualified Data.Attoparsec.ByteString.Char8 as C8
+import           Data.Data
 import           Data.Map                         (Map)
 import qualified Data.Map                         as Map
+import           Data.Typeable
 
 --
 -- external type definitions
@@ -76,7 +79,7 @@ data DataDescriptiveRecord =
 
 data DataFieldT =
     DFString !String | DFInteger !Integer | DFReal !Double | DFByteString !ByteString
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 class DataField t where
     fromDataField :: DataFieldT -> t
@@ -102,15 +105,15 @@ type DataDescriptiveField =
 
 data DataStructureCode =
     SingleDataItem | LinearStructure | MultiDimStructure
-    deriving (Eq, Enum, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable, Enum)
 
 data DataTypeCode =
     CharacterString | ImplicitPointInt | ImplicitPointReal | BinaryForm | MixedDataType
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data LexicalLevel =
     LexicalLevel0 | LexicalLevel1 | LexicalLevel2
-    deriving (Eq, Enum, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable, Enum)
 
 data DataFormat = CharacterData (Maybe Integer)
                 | ImplicitPoint (Maybe Integer)
@@ -119,12 +122,13 @@ data DataFormat = CharacterData (Maybe Integer)
                 | SubFieldLabel (Maybe Integer)
                 | SignedInt Integer
                 | UnsignedInt Integer
-                deriving (Show, Eq)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
+
 
 data DataStructure = SD DataFieldT
                    | LS (Map String DataFieldT)
                    | MDS [Map String DataFieldT]
-                   deriving (Show, Eq)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 --
 -- internal type definitions

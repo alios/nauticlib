@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+
+
 {-
 Copyright (c) 2013, Markus Barenhoff <alios@alios.org>
 All rights reserved.
@@ -33,7 +36,9 @@ module Data.S57.Objects
     , ObjectT (..)
     ) where
 
+import           Data.Data
 import           Data.S57.Attributes
+import           Data.Typeable
 
 
 data ClassTag
@@ -41,12 +46,13 @@ data ClassTag
     | Cartographic -- ^ Feature 'Object' which contains information about the cartographic representation (including text) of real world entities
     | Geo -- ^ Feature 'Object' which contains information which carries the descriptive characteristics of a real world entity
     | Collection -- ^ Feature 'Object' which describes the relationship between other 'Object's
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data GeoPrimitive
     = Point
     | Line
     | Area
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 class Object t where
@@ -238,7 +244,8 @@ data ObjectT
     | CSYMB
     | COMPS
     | TEXTS
-    deriving (Eq, Show)
+        deriving (Eq, Ord, Read, Show, Data, Typeable)
+
 
 
 

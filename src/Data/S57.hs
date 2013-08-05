@@ -30,7 +30,8 @@ module Data.S57 (
   module Data.S57.RecordTypes,
   module Data.S57.Attributes,
   DataFileS57 (..),
-  s57dataFile
+  s57dataFile,
+  dsid
 ) where
 
 import qualified Data.ISO8211         as ISO8211

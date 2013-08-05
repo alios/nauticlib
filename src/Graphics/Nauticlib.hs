@@ -28,7 +28,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -}
 
-module Graphics.Nauticlib where
+module Graphics.Nauticlib
+    ( renderdocs
+    , Symbol (..)
+    , ACHARE02 (..)
+    , ACHARE51 (..)
+    , ACHBRT07 (..)
+    , ACHRES51 (..)
+    , ACHRES61 (..)
+    , ACHRES71 (..)
+    ) where
 
 
 import qualified Data.ByteString.Lazy        as BL
@@ -43,8 +52,6 @@ import           Text.Blaze.Svg11            (Svg, l, m, mkPath, (!))
 import qualified Text.Blaze.Svg11            as S
 import qualified Text.Blaze.Svg11.Attributes as A
 import           Text.CSS.Render
-
-
 
 
 class (Show c) => Symbol c where
@@ -75,7 +82,7 @@ data ACHBRT07 = ACHBRT07 deriving (Show, Eq)
 data ACHRES51 = ACHRES51 deriving (Show, Eq)
 data ACHRES61 = ACHRES61 deriving (Show, Eq)
 data ACHRES71 = ACHRES71 deriving (Show, Eq)
-
+data AIRARE02 = AIRARE02 deriving (Show, Eq)
 
 
 instance Symbol ACHARE02 where
@@ -253,13 +260,46 @@ instance Symbol ACHRES71 where
                         S.lr (-0.25) (-0.54)
 
 
+instance Symbol AIRARE02 where
+    symPivotPoint  _ = (3.98, 3.98)
+    symBoundingBox _ = (7.96, 7.96)
+    symSvg_ s =
+        S.g  ! A.class_ (lookupColorClass LANDF)
+             ! A.strokeWidth "0.3"
+             ! A.fillOpacity "0" $ do
+          S.circle ! A.cx (S.toValue (bx / 2))
+                   ! A.cy (S.toValue (bx / 2))
+                   ! A.r  (S.toValue ((7.96 :: Double) / 2.0))
+          S.path ! A.transform tr  ! A.d airplane
+        where (bx,by) = symBoundingBox s
+              (ax,ay) = (6.18, 5.28)
+              tr = S.translate ((bx - ax) / 2) ((by - ay) / 2)
+              airplane = mkPath $ do
+                           S.m (ax/2) ay
+                           S.lr (2.36 / 2) 0
+                           S.lr ((2.36 - 1.06) / (-2)) (-0.5)
+                           S.lr 0 ((-1.79) + 0.5)
+                           S.lr ((6.18 - 1.06) / 2) 0
+                           S.lr ((6.18 - 1.30) / (-2)) (-1.5)
+                           S.lr 0 (-1.5)
+                           S.lr ((-1.30) / 2) ((-1.30) / 2)
+
+                           S.lr ((-1.30) / 2) ((1.30) / 2)
+                           S.lr 0 1.5
+                           S.lr ((ax-2.36)/ (-2))  1.5
+                           S.lr ((ax-1.06) / 2) 0
+                           S.lr 0 (1.79 - 0.5)
+                           S.lr ((2.36 - 1.06) / (-2)) 0.5
+                           S.lr (2.36 / 2) 0
 defs = S.toMarkup
        [ symSvg ACHARE02
        , symSvg ACHARE51
        , symSvg ACHBRT07
        , symSvg ACHRES51
        , symSvg ACHRES61
-       , symSvg ACHRES71 ]
+       , symSvg ACHRES71
+       , symSvg AIRARE02
+       ]
 
 
 docTypeCSS :: T.Text -> Svg
@@ -283,17 +323,26 @@ docTypeSvgCSS c inner =
 
 
 
-ts = renderdocs "/home/alios/tmp/" "test"
+ts = renderdocs "/home/alios/tmp/" "test" $ do
+  symUse ACHRES71 0 0
+  symUse ACHRES61 20 0
+  symUse ACHRES51 40 0
+  symUse ACHBRT07 70 0
+  symUse ACHARE51 90 0
+  symUse ACHARE02 110 0
+  symUse AIRARE02 120 0
 
-renderdocs :: FilePath -> String -> IO ()
-renderdocs d f = do
+
+renderdocs :: FilePath -> String -> Svg -> IO ()
+renderdocs d f inner = do
   let wFile e = BL.writeFile $ d </> (f `addExtension` e)
-  wFile "svg" $ renderMarkup $ svgDoc (f `addExtension` "css")
+  wFile "svg" $ renderMarkup $ svgDoc (f `addExtension` "css") inner
   wFile "css" $ cssDoc
 
 
 data SymbolColor = CHMGD
                  | CHMFG
+                 | LANDF
                  deriving (Eq, Show)
 
 lookupColorClass = S.toValue . show
@@ -308,20 +357,17 @@ cssDoc =
     , ( ".CHMFG", [("stroke", "darkmagenta")
                   ,("fill", "darkmagenta")
                   ])
+    , ( ".LANDF", [("stroke", "brown")
+                  ,("fill", "brown")
+                  ])
     ]
 
-
-svgDoc :: String -> Svg
-svgDoc f = do
+svgDoc :: String -> Svg -> Svg
+svgDoc f inner = do
   docTypeSvgCSS (fromString f)
        ! A.version "1.1"
        ! A.width "800"
        ! A.height "600"
-       ! A.viewbox "-100 -100 800 600" $ do
+       ! A.viewbox "-10 -10 150 50" $ do
            S.defs defs
-           symUse ACHRES71 0 0
-           symUse ACHRES61 20 0
-           symUse ACHRES51 40 0
-           symUse ACHBRT07 70 0
-           symUse ACHARE51 90 0
-           symUse ACHARE02 110 0
+           inner

@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+
 {-
 Copyright (c) 2013, Markus Barenhoff <alios@alios.org>
 All rights reserved.
@@ -32,12 +34,14 @@ module Data.S57.Attributes
     , AttributeValue(..)
     ) where
 
+import           Data.Data
 import           Data.List.Split
 import           Data.Map        (Map)
 import qualified Data.Map        as M
 import           Data.Maybe
 import           Data.Set        (Set)
 import qualified Data.Set        as S
+import           Data.Typeable
 
 data AttributeType
     = AttEnumerated
@@ -46,10 +50,11 @@ data AttributeType
     | AttInteger
     | AttCodedString
     | AttFreeText
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data AttributeClass = AttributeClass Char
-                      deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
+
 data AttributeValue
     = UnparsedValue AttributeType AttributeClass String
     | EnumValue (Maybe (Integer, String))
@@ -58,7 +63,8 @@ data AttributeValue
     | IntegerValue Integer
     | CodedStringValue String
     | FreeTextValue String
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
+
 
 class (Enum a, Show a) => Attribute a where
     att_code :: a -> Integer
@@ -711,7 +717,7 @@ instance Attribute AttributeT where
 
 
 data AttributeT = AGENCY | BCNSHP | BUISHP | BOYSHP | BURDEP | CALSGN | CATAIR | CATACH | CATBRG | CATBUA | CATCBL | CATCAN | CATCAM | CATCHP | CATCOA | CATCTR | CATCON | CATCOV | CATCRN | CATDAM | CATDIS | CATDOC | CATDPG | CATFNC | CATFRY | CATFIF | CATFOG | CATFOR | CATGAT | CATHAF | CATHLK | CATICE | CATINB | CATLND | CATLMK | CATLAM | CATLIT | CATMFA | CATMPA | CATMOR | CATNAV | CATOBS | CATOFP | CATOLB | CATPLE | CATPIL | CATPIP | CATPRA | CATPYL | CATQUA | CATRAS | CATRTB | CATROS | CATTRK | CATRSC | CATREA | CATROD | CATRUN | CATSEA | CATSLC | CATSIT | CATSIW | CATSIL | CATSLO | CATSCF | CATSPM | CATTSS | CATVEG | CATWAT | CATWED | CATWRK | CATZOC | SPACE | CHARS | COLOUR | COLPAT | COMCHA | CSIZE | CPDATE | CSCALE | CONDTN | CONRAD | CONVIS | CURVEL | DATEND | DATSTA | DRVAL1 | DRVAL2 | DUNITS | ELEVAT | ESTRNG | EXCLIT | EXPSOU | FUNCTN | HEIGHT | HUNITS | HORACC | HORCLR | HORLEN | HORWID | ICEFAC | INFORM | JRSDTN | JUSTH | JUSTV | LIFCAP | LITCHR | LITVIS | MARSYS | MLTYLT | NATION | NATCON | NATSUR | NATQUA | NMDATE | OBJNAM | ORIENT | PEREND | PERSTA | PICREP | PILDST | PRCTRY | PRODCT | PUBREF | QUASOU | RADWAL | RADIUS | RECDAT | RECIND | RYRMGV | RESTRN | SCAMAX | SCAMIN | SCVAL1 | SCVAL2 | SECTR1 | SECTR2 | SHIPAM | SIGFRQ | SIGGEN | SIGGRP | SIGPER | SIGSEQ | SOUACC | SDISMX | SDISMN | SORDAT | SORIND | STATUS | SURATH | SUREND | SURSTA | SURTYP | SCALE | SCODE | TECSOU | TXSTR | TXTDSC | TS_TSP | TS_TSV | T_ACWL | T_HWLW | T_MTOD | T_THDF | T_TINT | T_TSVL | T_VAHC | TIMEND | TIMSTA | TINTS | TOPSHP | TRAFIC | VALACM | VALDCO | VALLMA | VALMAG | VALMXR | VALNMR | VALSOU | VERACC | VERCLR | VERCCL | VERCOP | VERCSA | VERDAT | VERLEN | WATLEV | CAT_TS | PUNITS | NINFOM | NOBJNM | NPLDST | NTXST | NTXTDS | HORDAT | POSACC | QUAPOS
-                  deriving (Show, Eq, Ord)
+                  deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 

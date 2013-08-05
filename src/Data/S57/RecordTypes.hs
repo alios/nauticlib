@@ -1,4 +1,6 @@
+{-# LANGUAGE DeriveDataTypeable   #-}
 {-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TemplateHaskell      #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 {-
@@ -112,10 +114,13 @@ import           Data.Time.Format
 import           Data.Word
 import           System.Locale
 
+import           Data.Data
 import           Data.ISO8211.Parser
 import           Data.Map             (Map)
 import           Data.S57.Attributes
 import           Data.S57.Objects
+import           Data.SafeCopy        (base, deriveSafeCopy)
+import           Data.Typeable
 
 -- | Data set Identification field structure 'DSID'
 data DSID = DSID {
@@ -136,7 +141,7 @@ data DSID = DSID {
       dsid_agen :: Integer, -- ^ Producing agency
       dsid_comt :: String, -- ^ Comment
       dsid_dssi :: DSSI -- ^ Data set structure information field
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Data set structure information field 'DSSI'
 data DSSI = DSSI {
@@ -151,7 +156,7 @@ data DSSI = DSSI {
       dssi_nocn :: Integer, -- ^ Number of connected node records
       dssi_noed :: Integer, -- ^ Number of edge records
       dssi_nofa :: Integer  -- ^ Number of face records
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Data set parameter field 'DSPM'
@@ -171,7 +176,7 @@ data DSPM = DSPM {
       dspm_comt :: String, -- ^ Comment
       dspm_dspr :: (Maybe DSPR), -- ^ Data set projection
       dspm_dsrc :: ([DSRC]) -- ^ Data set registration control fields
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Data set projection field (DSPR)
 data DSPR = DSPR {
@@ -184,7 +189,7 @@ data DSPR = DSPR {
       dspr_fnor :: Double, -- ^ False Northing
       dspr_fpmf :: Integer, -- ^ Floating Point mulitiplication factor
       dspr_comt :: String -- ^ Comment
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Data set registration conrol (DSRC)
@@ -197,7 +202,7 @@ data DSRC = DSRC {
       dsrc_rxvl :: Double, -- ^ Registration point X-value
       dsrc_ryvl :: Double, -- ^ Registration point Y-value
       dsrc_comt :: String -- ^ Comment
-} deriving (Eq,Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 
@@ -211,7 +216,7 @@ data DSHT = DSHT {
       dsht_dcrt :: String, -- ^ Data collection criteria
       dsht_codt :: (Maybe Day), -- ^ Compilation Date
       dsht_comt :: String -- ^ Comment
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Data set accuracy record (DSAC)
 data DSAC = DSAC {
@@ -222,7 +227,7 @@ data DSAC = DSAC {
       dsac_sacc :: Double, -- ^ Absolute sounding accuracy
       dsac_fpmf :: Integer, -- ^ Floating point multiplication factor
       dsac_comt :: String -- ^ Comment
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Catalogue directory record (CATD)
 data CATD = CATD {
@@ -239,7 +244,8 @@ data CATD = CATD {
       catd_crcs  :: String, -- ^  CRC
       catd_comt  :: String, -- ^  Comment
       catd_catxs :: [CATX]
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
+
 
 -- | Catalogue cross refernce record (CATX)
 data CATX = CATX  {
@@ -248,7 +254,7 @@ data CATX = CATX  {
       catx_nam1 :: Name, -- ^ Name 1
       catx_nam2 :: Name, -- ^ Name 2
       catx_comt :: String -- ^ Comment
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 data DDDF = DDDF {
@@ -262,11 +268,11 @@ data DDDF = DDDF {
       dddf_defn :: String, -- ^ Definition
       dddf_auth :: Integer, -- ^ Autorizing agency
       dddf_comt :: String -- ^ Comment
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 data DDDR = DDDR {
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 data DDDI = DDDI {
@@ -278,26 +284,26 @@ data DDDI = DDDI {
       dddi_adft :: String, -- ^ Attribute domain format
       dddi_auth :: Integer, -- ^ Autorizing agency
       dddi_comt :: String -- ^ Comment
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 data DDOM = DDOM {
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 data DDRF = DDRF {
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 data DDSI = DDSI {
       ddsi_rcnm :: String, -- ^  Record name
       ddsi_rcid :: Integer, -- ^ Record identification number
       ddsi_oblb :: Integer -- ^ Object label/code
- } deriving (Eq, Show)
+ } deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data DDSC = DDSC
  {
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Featrure record
@@ -315,7 +321,7 @@ data FRID = FRID {
       frid_ffpc  :: (Maybe FFPC), -- ^ Feature record to feature object pointer
       frid_ffpts :: ([FFPT]), -- ^ Feature Record to Feature Object Pointer
       frid_fspts :: ([FSPT]) -- ^ Feature Record to Spatial Record Pointer
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Feature object identifier
@@ -323,20 +329,20 @@ data FOID = FOID {
       foid_agen :: Integer, -- ^ Producing agency
       foid_fidn :: Integer, -- ^ Feature identification number
       foid_fids :: Integer -- ^ Feature idendification subdivision
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Feature attribute
 data ATTF = ATTF {
       attf_attl :: AttributeT, -- ^ Attribute label/code
       attf_atvl :: AttributeValue -- ^ Attribute value
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Feature national attribute
 data NATF = NATF {
       natf_attl :: AttributeT, -- ^ Attribute label/code
       natf_atvl :: String -- ^ Attribute value
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Feature record to feature object pointer
@@ -344,7 +350,7 @@ data FFPC = FFPC {
       ffpc_ffui :: RUIN, -- ^ Feature object point update instruction
       ffpc_ffix :: Integer, -- ^ Feature object pointer index
       ffpc_nfpt :: Integer -- ^ Number of feature object pointers
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Feature record to feature object pointer
@@ -352,7 +358,7 @@ data FFPT = FFPT {
       ffpt_lnam :: LongName, -- ^ Long Name
       ffpt_rind :: RelationShipIndicator, -- ^ Relationship indicator
       ffpt_comt :: String -- ^ Comment
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Feature record to spatial record pointer
 data FSPT = FSPT {
@@ -360,7 +366,7 @@ data FSPT = FSPT {
       fspt_ornt :: (Maybe Orientation), -- ^ Relationship indicator
       fspt_usag :: (Maybe UsageIndicator), -- ^ Comment,
       fspt_mask :: (Maybe MaskingIndicator) -- ^ Masking indicator
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Vector record
@@ -376,20 +382,20 @@ data VRID = VRID {
       vrid_sg2ds :: ([SG2D]), -- ^ 2-D coodrinate fields
       vrid_sg3ds :: ([SG3D]),  -- ^ 3-D coodrinate (Sounding Array) fields
       vrid_arccs :: ([ARCC])  -- ^ Arc/Curve definition fields
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Vector record attribute
 data ATTV = ATTV {
       attv_attl :: Integer, -- ^ Attribute label/code
       attv_atvl :: String -- ^ Attribute value
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Vector record pointer control
 data VRPC = VRPC {
       vrpc_vpui :: RUIN, -- ^ Vector record pointer update instruction
       vrpc_vpix :: Integer, -- ^ Vector record pointer index
       vrpc_nvpt :: Integer -- ^ Number of record pointers
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Vector record pointer
@@ -399,7 +405,7 @@ data VRPT = VRPT {
       vrpt_usag :: (Maybe UsageIndicator), -- ^ Usage indicator
       vrpt_topi :: (Maybe TopologyIndicator), -- ^ Topology indicator
       vrpt_mask :: (Maybe MaskingIndicator)  -- ^ Masking indicator
-    } deriving (Eq, Show)
+    } deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | Coordinate control field
@@ -407,20 +413,20 @@ data SGCC = SGCC {
       sgcc_ccui :: RUIN, -- ^ Coordinate update instruction
       sgcc_ccix :: Integer, -- ^ Coordinate index
       sgcc_ccnc :: Integer -- ^ Number of coordinates
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | 2-D coodrinate fields
 data SG2D = SG2D {
       sg2d_ycoo :: Double, -- ^ Coordinat in Y axis
       sg2d_xcoo :: Double  -- ^ Coordinat in X axis
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | 3-D coodrinate (Sounding Array) fields
 data SG3D = SG3D {
       sg3d_ycoo :: Double, -- ^ Coordinat in Y axis
       sg3d_xcoo :: Double, -- ^ Coordinat in X axis
       sg3d_ve3d :: Double -- ^ 3-D (sounding) value
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Arc/Curve definition
 data ARCC = ARCC {
@@ -429,7 +435,7 @@ data ARCC = ARCC {
       arcc_ordr :: Integer, -- ^ Curve order
       arcc_reso :: Double, -- ^ Interpolated point resolution
       arcc_fpmf :: Integer -- ^ Floating point multiplication factor
-} deriving (Eq, Show)
+} deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 type Name = (Word8, Word32)
@@ -442,31 +448,31 @@ type LongName = FOID
 data EXPP
     = DataSetIsNew
     | DataSetIsRevision
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data DataStruct
     = CartographicSpaghetti
     | ChainMode
     | PlanarGraph
     | FullTopology
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data PRSP
     = ElectronicNavigationalChart
     | IHOObjectCatalogueDataDictionary
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data PROF
     = ENCNew
     | ENCRevision
     | IHODataDictionary
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data COUN
     = LatitudeLongitude
     | EastingNorthing
     | UnitsOnTheChartMap
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | The vector record identifier field hold the record identifier (key) for that vector record.
 --   It is also used to diffentiate between the various types of vector records.
@@ -475,13 +481,13 @@ data VectorRecordIdentifier
     | ConnectedNode
     | Edge
     | Face
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data RUIN
     = Insert
     | Delete
     | Modify
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 
 -- | The direction in which an edge is to be interpreted for a particular area is indicated in the
@@ -490,7 +496,7 @@ data Orientation
     = Forward
     | Reverse
     | OrientNULL
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | The In the case of areas consisting of one outer boundary and one or more non-intersecting
 --   inner boundaries (areas with holes), the 'UsageIndicator' subfield is used to distinguish
@@ -501,7 +507,7 @@ data UsageIndicator
     | Interior
     | ExteriorBoundaryTruncated
     | UsageNULL
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Topology Indicator
 data TopologyIndicator
@@ -510,18 +516,18 @@ data TopologyIndicator
     | LeftFace
     | RightFace
     | ContainingFace
-    deriving (Show, Eq)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 -- | Under certain circumstances it may be necessary to suppress the symbolization of one or more edges which define the inner or outer boundary of an area. Suppression off the symbolization can be controlled by using the 'MaskingIndicator'.
 data MaskingIndicator
     = MaskMask
     | MaskShow
-    deriving (Show, Eq)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data ObjectOrAttribute
     = IsObject
     | IsAttribute
-    deriving (Show, Eq)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data TypeOfObjectOrAttribute
     = IsMetaObject
@@ -531,7 +537,7 @@ data TypeOfObjectOrAttribute
     | IsFeatureAttribute
     | IsFeatureNationalAttribute
     | IsSpatialAttribute
-    deriving (Show, Eq)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data AttributeDomainCode
     = ADCEnumerated
@@ -540,14 +546,14 @@ data AttributeDomainCode
     | ADCInteger
     | ADCCodeString
     | ADCFreeTextFormat
-    deriving (Show,Eq)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data RelationShipIndicator
     = Master
     | Slave
     | Peer
     | ProductSpecInd (Either Word8 String)
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data ArcCurveType
     = Arc3PointCentre
@@ -555,12 +561,12 @@ data ArcCurveType
     | UniformBspline
     | PiecewiseBezier
     | NonUniformRationalBspline
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 data ConstructionSurface
     = Ellipsoidal
     | Planar
-    deriving (Eq, Show)
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 --
 -- instance declarations
