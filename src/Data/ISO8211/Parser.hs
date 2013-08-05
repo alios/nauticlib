@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable   #-}
 {-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TemplateHaskell      #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 {-
@@ -59,16 +60,53 @@ import qualified Data.Attoparsec.ByteString.Char8 as C8
 import           Data.Data
 import           Data.Map                         (Map)
 import qualified Data.Map                         as Map
+import           Data.SafeCopy                    (base, deriveSafeCopy)
 import           Data.Typeable
 
 --
 -- external type definitions
 --
 
+
+
+data LexicalLevel =
+    LexicalLevel0 | LexicalLevel1 | LexicalLevel2
+    deriving (Eq, Ord, Read, Show, Data, Typeable, Enum)
+
+$(deriveSafeCopy 0 'base ''LexicalLevel)
+
+data DataFormat = CharacterData (Maybe Integer)
+                | ImplicitPoint (Maybe Integer)
+                | ExplicitPoint (Maybe Integer)
+                | BitString (Maybe Integer)
+                | SubFieldLabel (Maybe Integer)
+                | SignedInt Integer
+                | UnsignedInt Integer
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
+
+$(deriveSafeCopy 0 'base ''DataFormat)
+
+data DataFieldT =
+    DFString !String | DFInteger !Integer | DFReal !Double | DFByteString !ByteString
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
+
+$(deriveSafeCopy 0 'base ''DataFieldT)
+
+
+data DataStructure = SD DataFieldT
+                   | LS (Map String DataFieldT)
+                   | MDS [Map String DataFieldT]
+    deriving (Eq, Ord, Read, Show, Data, Typeable)
+
+$(deriveSafeCopy 0 'base ''DataStructure)
+
+
+
 type DataFile = (DataDescriptiveRecord, [DataRecord])
 
 type DataRecord = Tree DataFieldR
 type DataFieldR = (String, DataStructure)
+
 
 data DataDescriptiveRecord =
     DDR {
@@ -77,9 +115,6 @@ data DataDescriptiveRecord =
       ddrDataFormats    :: Map String DataDescriptiveField -- [(String, DataDescriptiveField)]
     } deriving (Show, Eq)
 
-data DataFieldT =
-    DFString !String | DFInteger !Integer | DFReal !Double | DFByteString !ByteString
-    deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 class DataField t where
     fromDataField :: DataFieldT -> t
@@ -109,25 +144,6 @@ data DataStructureCode =
 
 data DataTypeCode =
     CharacterString | ImplicitPointInt | ImplicitPointReal | BinaryForm | MixedDataType
-    deriving (Eq, Ord, Read, Show, Data, Typeable)
-
-data LexicalLevel =
-    LexicalLevel0 | LexicalLevel1 | LexicalLevel2
-    deriving (Eq, Ord, Read, Show, Data, Typeable, Enum)
-
-data DataFormat = CharacterData (Maybe Integer)
-                | ImplicitPoint (Maybe Integer)
-                | ExplicitPoint (Maybe Integer)
-                | BitString (Maybe Integer)
-                | SubFieldLabel (Maybe Integer)
-                | SignedInt Integer
-                | UnsignedInt Integer
-    deriving (Eq, Ord, Read, Show, Data, Typeable)
-
-
-data DataStructure = SD DataFieldT
-                   | LS (Map String DataFieldT)
-                   | MDS [Map String DataFieldT]
     deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 --

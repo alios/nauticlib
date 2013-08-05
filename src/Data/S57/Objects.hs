@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TemplateHaskell    #-}
 
 
 {-
@@ -38,8 +39,8 @@ module Data.S57.Objects
 
 import           Data.Data
 import           Data.S57.Attributes
+import           Data.SafeCopy       (base, deriveSafeCopy)
 import           Data.Typeable
-
 
 data ClassTag
     = Meta -- ^ Feature 'Object' which contains information about other objects
@@ -48,11 +49,15 @@ data ClassTag
     | Collection -- ^ Feature 'Object' which describes the relationship between other 'Object's
     deriving (Eq, Ord, Read, Show, Data, Typeable)
 
+$(deriveSafeCopy 0 'base ''ClassTag)
+
 data GeoPrimitive
     = Point
     | Line
     | Area
     deriving (Eq, Ord, Read, Show, Data, Typeable)
+
+$(deriveSafeCopy 0 'base ''GeoPrimitive)
 
 
 class Object t where
@@ -246,6 +251,7 @@ data ObjectT
     | TEXTS
         deriving (Eq, Ord, Read, Show, Data, Typeable)
 
+$(deriveSafeCopy 0 'base ''ObjectT)
 
 
 
